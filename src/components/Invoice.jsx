@@ -1,16 +1,28 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 
 const Invoice = ({ data, onClose }) => {
+  const [storeSettings, setStoreSettings] = useState({
+    storeName: 'GamersEdge',
+    address: '207/04/03/F/2, Wilimbula, Henegama',
+    phone: '+94 74 070 5733',
+    email: 'sl.gamersedge@gmail.com',
+    footerText: 'Thank you for shopping with GamersEdge!'
+  });
+
   useEffect(() => {
     if (data) {
-      console.log(`[Invoice] Displayed for ID: ${data.id}`);
-    } else {
-      console.log('[Invoice] Hidden (No Data)');
+      // Fetch settings whenever invoice is shown to ensure latest info
+      window.api.getSettings().then(settings => {
+        if (settings && Object.keys(settings).length > 0) {
+          setStoreSettings(prev => ({ ...prev, ...settings }));
+        }
+      }).catch(console.error);
+
+      // Auto-print after delay
+      const timer = setTimeout(() => window.print(), 500);
+      return () => clearTimeout(timer);
     }
-    return () => {
-       if (data) console.log(`[Invoice] Unmounting for ID: ${data.id}`);
-    };
   }, [data]);
 
   if (!data) return null;
@@ -19,10 +31,7 @@ const Invoice = ({ data, onClose }) => {
     <div id="invoice-content" className="font-sans w-full h-full bg-white text-slate-900 absolute top-0 left-0 z-50 p-12">
       {/* Close Button (Hidden on Print) */}
       <button 
-        onClick={() => {
-          console.log('[Invoice] User clicked Close');
-          onClose && onClose();
-        }}
+        onClick={onClose}
         className="absolute top-5 right-5 p-2 bg-red-600 text-white rounded-full hover:bg-red-700 shadow-lg print:hidden"
         aria-label="Close Invoice"
       >
@@ -32,12 +41,11 @@ const Invoice = ({ data, onClose }) => {
       {/* Header Section */}
       <div className="flex justify-between items-start mb-12">
         <div className="w-1/2">
-           <h1 className="text-5xl font-extrabold text-cyan-600 tracking-tight uppercase mb-2">GamersEdge</h1>
-           <div className="text-sm font-medium text-slate-500 leading-relaxed">
-             <p>207/04/03/F/2, Wilimbula, Henegama</p>
-             <p>Wilimbula, Sri Lanka</p>
-             <p className="mt-2 text-slate-800 font-bold">+94 74 070 5733 / +94 76 532 9455</p>
-             <p className="text-cyan-700 underline decoration-cyan-300">sl.gamersedge@gmail.com</p>
+           <h1 className="text-5xl font-extrabold text-cyan-600 tracking-tight uppercase mb-2">{storeSettings.storeName}</h1>
+           <div className="text-sm font-medium text-slate-500 leading-relaxed whitespace-pre-wrap">
+             <p>{storeSettings.address}</p>
+             <p className="mt-2 text-slate-800 font-bold">{storeSettings.phone}</p>
+             <p className="text-cyan-700 underline decoration-cyan-300">{storeSettings.email}</p>
            </div>
         </div>
         <div className="text-right w-1/3">
@@ -67,13 +75,23 @@ const Invoice = ({ data, onClose }) => {
         </div>
         <div className="text-right">
            <h3 className="text-xs font-bold uppercase text-slate-400 mb-1 tracking-wider">Payment Method</h3>
-           <span className={`inline-block px-3 py-1 rounded text-xs font-bold uppercase tracking-wide border ${
-             data.paymentMethod === 'Card' 
-             ? 'bg-purple-100 text-purple-700 border-purple-200' 
-             : 'bg-emerald-100 text-emerald-700 border-emerald-200'
-           }`}>
-             {data.paymentMethod || 'Cash'}
-           </span>
+           <div className="flex flex-col items-end">
+             <span className={`inline-block px-3 py-1 rounded text-xs font-bold uppercase tracking-wide border ${
+               data.paymentMethod === 'Card'
+               ? 'bg-purple-100 text-purple-700 border-purple-200'
+               : data.paymentMethod === 'Split'
+               ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
+               : 'bg-emerald-100 text-emerald-700 border-emerald-200'
+             }`}>
+               {data.paymentMethod || 'Cash'}
+             </span>
+             {data.paymentDetails && (
+               <div className="text-xs text-slate-500 mt-1 font-mono">
+                 {data.paymentDetails.cash > 0 && <span>Cash: {data.paymentDetails.cash.toLocaleString()} </span>}
+                 {data.paymentDetails.card > 0 && <span>Card: {data.paymentDetails.card.toLocaleString()}</span>}
+               </div>
+             )}
+           </div>
         </div>
       </div>
 
@@ -107,12 +125,14 @@ const Invoice = ({ data, onClose }) => {
           <div className="space-y-3">
              <div className="flex justify-between text-slate-500 font-medium">
                 <span>Subtotal</span>
-                <span>{data.total.toLocaleString()}</span>
+                <span>{(data.total + (data.discount||0)).toLocaleString()}</span>
              </div>
-             <div className="flex justify-between text-slate-500 font-medium">
-                <span>Tax (0%)</span>
-                <span>0.00</span>
-             </div>
+             {data.discount > 0 && (
+               <div className="flex justify-between text-red-500 font-medium">
+                  <span>Discount</span>
+                  <span>-{data.discount.toLocaleString()}</span>
+               </div>
+             )}
              <div className="flex justify-between items-center border-t-2 border-cyan-600 pt-4 mt-4">
                 <span className="text-lg font-bold text-slate-900">Grand Total</span>
                 <span className="text-3xl font-black text-cyan-600">
@@ -126,7 +146,7 @@ const Invoice = ({ data, onClose }) => {
 
       {/* Bottom Footer */}
       <div className="absolute bottom-12 left-12 right-12 text-center border-t border-slate-100 pt-6">
-        <p className="text-slate-900 font-bold mb-1">Thank you for shopping with GamersEdge!</p>
+        <p className="text-slate-900 font-bold mb-1">{storeSettings.footerText}</p>
         <p className="text-xs text-slate-400">Please retain this invoice for warranty claims. Goods once sold are not returnable.</p>
         <div className="mt-4 flex justify-center gap-2">
            <div className="h-1 w-16 bg-cyan-500 rounded-full"></div>

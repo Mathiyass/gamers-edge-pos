@@ -1,13 +1,50 @@
-import React, { useState } from 'react';
-import { Save, RefreshCw, ShieldAlert, Database, Server, UploadCloud } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Save, RefreshCw, ShieldAlert, Database, Server, UploadCloud, Store } from 'lucide-react';
 
 export default function Settings() {
   const [msg, setMsg] = useState({ text: '', type: '' });
   const [isResetting, setIsResetting] = useState(false);
+  const [settings, setSettings] = useState({
+    storeName: 'GamersEdge',
+    address: '207/04/03/F/2, Wilimbula, Henegama',
+    phone: '+94 74 070 5733',
+    email: 'sl.gamersedge@gmail.com',
+    footerText: 'Thank you for shopping with GamersEdge!'
+  });
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const data = await window.api.getSettings();
+      if (data && Object.keys(data).length > 0) {
+        setSettings(prev => ({ ...prev, ...data }));
+      }
+    } catch (e) {
+      console.error("Failed to load settings", e);
+    }
+  };
 
   const showMsg = (text, type = 'success') => {
     setMsg({ text, type });
     setTimeout(() => setMsg({ text: '', type: '' }), 4000);
+  };
+
+  const handleSaveSettings = async (e) => {
+    e.preventDefault();
+    try {
+      await window.api.updateSettings(settings);
+      showMsg('Store settings updated successfully!', 'success');
+    } catch (e) {
+      showMsg('Failed to update settings', 'error');
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setSettings(prev => ({ ...prev, [name]: value }));
   };
 
   const handleBackup = async () => {
@@ -60,12 +97,12 @@ export default function Settings() {
   };
 
   return (
-    <div className="h-full p-10 max-w-5xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="h-full p-10 max-w-5xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-y-auto custom-scrollbar">
       
       {/* Header */}
       <div className="border-b border-slate-700 pb-6">
         <h1 className="text-4xl font-bold text-white">System Settings</h1>
-        <p className="text-slate-400 mt-2">Manage database, security, and system preferences.</p>
+        <p className="text-slate-400 mt-2">Manage store information, database, and system preferences.</p>
       </div>
 
       {/* Notifications */}
@@ -79,6 +116,68 @@ export default function Settings() {
           {msg.text}
         </div>
       )}
+
+      {/* Store Info Card */}
+      <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-8 hover:border-cyan-500/30 transition-all">
+        <div className="flex items-center gap-3 mb-6 text-cyan-400">
+            <Store size={24} />
+            <h2 className="text-xl font-bold">Store Information</h2>
+        </div>
+        <form onSubmit={handleSaveSettings} className="space-y-4">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div className="space-y-1">
+               <label className="text-xs font-bold text-slate-500 uppercase">Store Name</label>
+               <input
+                 name="storeName"
+                 value={settings.storeName}
+                 onChange={handleChange}
+                 className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:border-cyan-500 outline-none"
+               />
+             </div>
+             <div className="space-y-1">
+               <label className="text-xs font-bold text-slate-500 uppercase">Phone</label>
+               <input
+                 name="phone"
+                 value={settings.phone}
+                 onChange={handleChange}
+                 className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:border-cyan-500 outline-none"
+               />
+             </div>
+             <div className="space-y-1 md:col-span-2">
+               <label className="text-xs font-bold text-slate-500 uppercase">Address</label>
+               <input
+                 name="address"
+                 value={settings.address}
+                 onChange={handleChange}
+                 className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:border-cyan-500 outline-none"
+               />
+             </div>
+             <div className="space-y-1 md:col-span-2">
+               <label className="text-xs font-bold text-slate-500 uppercase">Email</label>
+               <input
+                 name="email"
+                 value={settings.email}
+                 onChange={handleChange}
+                 className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:border-cyan-500 outline-none"
+               />
+             </div>
+             <div className="space-y-1 md:col-span-2">
+               <label className="text-xs font-bold text-slate-500 uppercase">Receipt Footer Text</label>
+               <input
+                 name="footerText"
+                 value={settings.footerText}
+                 onChange={handleChange}
+                 className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:border-cyan-500 outline-none"
+               />
+             </div>
+           </div>
+           <div className="flex justify-end pt-4">
+              <button type="submit" className="bg-cyan-600 hover:bg-cyan-500 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2">
+                  <Save size={18} /> Save Settings
+              </button>
+           </div>
+        </form>
+      </div>
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

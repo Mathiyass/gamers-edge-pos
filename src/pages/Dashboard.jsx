@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { DollarSign, TrendingUp, ShoppingBag, AlertTriangle, Activity } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
@@ -8,7 +8,10 @@ export default function Dashboard() {
   const [activity, setActivity] = useState([]);
   const [topProducts, setTopProducts] = useState([]);
   const [chartData, setChartData] = useState([]);
+  const [categoryData, setCategoryData] = useState([]);
   const navigate = useNavigate();
+
+  const COLORS = ['#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1'];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -17,10 +20,12 @@ export default function Dashboard() {
       const recentActivity = await window.api.getRecentActivity();
       const topItems = await window.api.getTopProducts();
       const history = await window.api.getTransactions();
+      const catData = await window.api.getSalesByCategory();
 
       setStats(dashboardStats);
       setActivity(recentActivity);
       setTopProducts(topItems || []);
+      setCategoryData(catData || []);
 
       // Process Chart Data (Last 7 Days)
       const last7Days = [...Array(7)].map((_, i) => {
@@ -99,8 +104,10 @@ export default function Dashboard() {
       {/* Main Content Split */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Sales Chart */}
+        {/* Sales Chart & Pie Chart */}
         <div className="lg:col-span-2 space-y-8">
+
+          {/* Sales Trend Area Chart */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg h-96">
             <h3 className="text-xl font-bold text-white mb-6">Sales Trend (Last 7 Days)</h3>
             <div className="h-full pb-8">
@@ -123,6 +130,36 @@ export default function Dashboard() {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
+          </div>
+
+          {/* Sales by Category Pie Chart */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg h-96">
+             <h3 className="text-xl font-bold text-white mb-6">Sales by Category</h3>
+             <div className="h-full pb-8">
+                <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                        <Pie
+                            data={categoryData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            outerRadius={100}
+                            fill="#8884d8"
+                            dataKey="value"
+                        >
+                            {categoryData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                        </Pie>
+                        <Tooltip
+                            contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#fff' }}
+                            itemStyle={{ color: '#fff' }}
+                            formatter={(value) => `LKR ${value.toLocaleString()}`}
+                        />
+                        <Legend />
+                    </PieChart>
+                </ResponsiveContainer>
+             </div>
           </div>
 
           {/* Top Selling Products */}

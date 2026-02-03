@@ -77,17 +77,32 @@ function handleIpc(channel, handler) {
 handleIpc('db:get-dashboard-stats', () => db.getDashboardStats());
 handleIpc('db:get-recent-activity', () => db.getRecentActivity());
 handleIpc('db:get-top-products', () => db.getTopSellingProducts());
+handleIpc('db:get-sales-by-category', () => db.getSalesByCategory());
 
 // Products
 handleIpc('db:get-products', () => db.getProducts());
 handleIpc('db:add-product', (_, data) => db.addProduct(data));
 handleIpc('db:update-product', (_, data) => db.updateProduct(data));
 handleIpc('db:delete-product', (_, id) => db.deleteProduct(id));
+handleIpc('db:import-products-csv', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openFile'],
+    filters: [{ name: 'CSV File', extensions: ['csv'] }],
+    title: 'Select Inventory CSV'
+  });
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return { success: false, message: 'Cancelled' };
+  }
+
+  return db.importProductsFromCSV(result.filePaths[0]);
+});
 
 // Transactions
 handleIpc('db:process-sale', (_, data) => db.createTransaction(data));
 handleIpc('db:get-history', () => db.getTransactions());
 handleIpc('db:update-transaction', (_, data) => db.updateTransaction(data));
+handleIpc('db:get-customer-history', (_, id) => db.getCustomerHistory(id));
 
 // Cart Hold/Recall
 handleIpc('db:hold-cart', (_, data) => db.addHeldCart(data));
@@ -112,7 +127,10 @@ handleIpc('db:add-repair', (_, data) => db.addRepair(data));
 handleIpc('db:update-repair-status', (_, {id, status}) => db.updateRepairStatus(id, status));
 handleIpc('db:delete-repair', (_, id) => db.deleteRepair(id));
 
-// System
+// Settings & System
+handleIpc('app:get-settings', () => db.getSettings());
+handleIpc('app:update-settings', (_, settings) => db.updateSettings(settings));
+
 handleIpc('app:backup', async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openDirectory'],
