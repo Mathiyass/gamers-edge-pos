@@ -9,7 +9,8 @@ export default function Settings() {
     address: '207/04/03/F/2, Wilimbula, Henegama',
     phone: '+94 74 070 5733',
     email: 'sl.gamersedge@gmail.com',
-    footerText: 'Thank you for shopping with GamersEdge!'
+    footerText: 'Thank you for shopping with GamersEdge!',
+    taxRate: '0'
   });
 
   useEffect(() => {
@@ -130,6 +131,18 @@ export default function Settings() {
                <input
                  name="storeName"
                  value={settings.storeName}
+                 onChange={handleChange}
+                 className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:border-cyan-500 outline-none"
+               />
+             </div>
+             <div className="space-y-1">
+               <label className="text-xs font-bold text-slate-500 uppercase">Tax Rate (%)</label>
+               <input
+                 name="taxRate"
+                 type="number"
+                 step="0.01"
+                 min="0"
+                 value={settings.taxRate}
                  onChange={handleChange}
                  className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:border-cyan-500 outline-none"
                />

@@ -78,6 +78,7 @@ handleIpc('db:get-dashboard-stats', () => db.getDashboardStats());
 handleIpc('db:get-recent-activity', () => db.getRecentActivity());
 handleIpc('db:get-top-products', () => db.getTopSellingProducts());
 handleIpc('db:get-sales-by-category', () => db.getSalesByCategory());
+handleIpc('db:get-sales-by-hour', () => db.getSalesByHour());
 
 // Products
 handleIpc('db:get-products', () => db.getProducts());

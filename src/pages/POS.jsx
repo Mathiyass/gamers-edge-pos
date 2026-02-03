@@ -24,6 +24,7 @@ export default function POS() {
 
   // Features State
   const [discount, setDiscount] = useState(0);
+  const [taxRate, setTaxRate] = useState(0);
   const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
   const [isRecallModalOpen, setIsRecallModalOpen] = useState(false);
   const [heldCarts, setHeldCarts] = useState([]);
@@ -67,6 +68,9 @@ export default function POS() {
   useEffect(() => {
     if (window.api) {
       window.api.getProducts().then(setProducts).catch(console.error);
+      window.api.getSettings().then(s => {
+        if (s && s.taxRate) setTaxRate(parseFloat(s.taxRate) || 0);
+      });
     }
   }, []);
 
@@ -120,7 +124,10 @@ export default function POS() {
   const subtotal = cart.reduce((sum, item) => sum + (item.price_sell * item.quantity), 0);
   const maxPointsRedeemable = Math.min(customerPoints, subtotal - discount);
   const pointsDiscount = usePoints ? maxPointsRedeemable : 0;
-  const total = Math.max(0, subtotal - discount - pointsDiscount);
+
+  const taxableAmount = Math.max(0, subtotal - discount - pointsDiscount);
+  const taxAmount = taxableAmount * (taxRate / 100);
+  const total = taxableAmount + taxAmount;
 
   // Initialize Split Amount when checkout opens
   useEffect(() => {
@@ -144,6 +151,7 @@ export default function POS() {
         items: cart,
         total,
         discount: discount + pointsDiscount,
+        tax: taxAmount,
         pointsUsed: usePoints ? maxPointsRedeemable : 0,
         customer,
         paymentMethod: isSplitPayment ? 'Split' : paymentMethod,
@@ -154,6 +162,7 @@ export default function POS() {
         id: result?.lastInsertRowid || 'NEW', 
         items: [...cart],
         total,
+        tax: taxAmount,
         discount: discount + pointsDiscount,
         customer,
         paymentMethod: isSplitPayment ? 'Split' : paymentMethod,
@@ -341,6 +350,14 @@ export default function POS() {
              <div className="flex justify-between text-emerald-400 text-sm font-medium animate-pulse">
                 <span className="flex items-center gap-1"><Award size={14}/> Points Redeemed</span>
                 <span>-{pointsDiscount.toLocaleString()}</span>
+             </div>
+          )}
+
+          {/* Tax Row */}
+          {taxRate > 0 && (
+             <div className="flex justify-between text-slate-400 text-sm">
+                 <span>Tax ({taxRate}%)</span>
+                 <span>+{taxAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
              </div>
           )}
 
