@@ -44,7 +44,9 @@ export function initDb() {
       payment_method TEXT DEFAULT 'Cash',
       customer_name TEXT,
       items_json TEXT,
-      discount REAL DEFAULT 0
+      discount REAL DEFAULT 0,
+      payment_details TEXT,
+      customer_id INTEGER
     );
 
     CREATE TABLE IF NOT EXISTS customers (
@@ -81,6 +83,19 @@ export function initDb() {
       salt TEXT NOT NULL,
       role TEXT DEFAULT 'staff'
     );
+
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS audit_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      timestamp TEXT NOT NULL,
+      user_name TEXT,
+      action TEXT NOT NULL,
+      details TEXT
+    );
   `);
 
   // 2. Schema Fixer (Lazy Migrations)
@@ -91,6 +106,8 @@ export function initDb() {
     { table: 'transactions', col: 'customer_name', def: 'TEXT' },
     { table: 'transactions', col: 'items_json', def: 'TEXT' },
     { table: 'transactions', col: 'discount', def: 'REAL DEFAULT 0' },
+    { table: 'transactions', col: 'payment_details', def: 'TEXT' },
+    { table: 'transactions', col: 'customer_id', def: 'INTEGER' },
     { table: 'customers', col: 'points', def: 'INTEGER DEFAULT 0' },
     { table: 'repairs', col: 'customer_id', def: 'INTEGER' },
     { table: 'repairs', col: 'created_at', def: "TEXT DEFAULT ''" }
@@ -118,6 +135,20 @@ export function initDb() {
   }
 }
 
+// --- Audit ---
+export function logAction(userName, action, details) {
+  try {
+    const timestamp = new Date().toISOString();
+    db.prepare('INSERT INTO audit_logs (timestamp, user_name, action, details) VALUES (?, ?, ?, ?)').run(timestamp, userName, action, details || '');
+  } catch (e) {
+    console.error("Audit Log Error:", e);
+  }
+}
+
+export function getAuditLogs() {
+  return db.prepare('SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 200').all();
+}
+
 // --- Auth ---
 export function loginUser(username, password) {
   console.log(`[DB] Attempting login for: '${username}'`);
@@ -125,14 +156,13 @@ export function loginUser(username, password) {
   
   if (!user) {
     console.log(`[DB] User '${username}' not found.`);
-    // Debug: List all users to see what's in there
-    const allUsers = db.prepare('SELECT username FROM users').all();
-    console.log(`[DB] Existing users: ${JSON.stringify(allUsers)}`);
     throw new Error('User not found');
   }
 
   const { hash } = hashPassword(password, user.salt);
   if (hash !== user.password) throw new Error('Invalid password');
+
+  logAction(user.name, 'LOGIN', `User ${user.username} logged in.`);
 
   // Return user without sensitive data
   return { id: user.id, name: user.name, username: user.username, role: user.role };
@@ -163,8 +193,28 @@ export function updateUser(userData) {
 }
 
 export function deleteUser(id) {
-  // Prevent deleting the last admin? Logic can be added here or in frontend.
   return db.prepare('DELETE FROM users WHERE id = ?').run(id);
+}
+
+// --- Settings ---
+export function getSettings() {
+  const rows = db.prepare('SELECT * FROM settings').all();
+  const settings = {};
+  rows.forEach(row => {
+    settings[row.key] = row.value;
+  });
+  return settings;
+}
+
+export function updateSettings(settingsObj) {
+  const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
+  const update = db.transaction(() => {
+    for (const [key, value] of Object.entries(settingsObj)) {
+      stmt.run(key, value);
+    }
+  });
+  update();
+  return { success: true };
 }
 
 // --- Analytics ---
@@ -189,9 +239,6 @@ export function getRecentActivity() {
 }
 
 export function getTopSellingProducts() {
-  // Aggregate sales from transaction items would be ideal, but storing JSON makes that hard in SQLite pure SQL.
-  // Alternative: We can parse recent transactions in JS or rely on a simpler metric if we tracked it.
-  // For now, let's process the last 100 transactions in JS to find top sellers.
   const txs = db.prepare('SELECT items_json FROM transactions ORDER BY timestamp DESC LIMIT 100').all();
   const map = {};
   
@@ -207,6 +254,25 @@ export function getTopSellingProducts() {
   return Object.values(map)
     .sort((a, b) => b.qty - a.qty)
     .slice(0, 5);
+}
+
+export function getSalesByCategory() {
+  const txs = db.prepare('SELECT items_json FROM transactions ORDER BY timestamp DESC LIMIT 500').all();
+  const map = {};
+
+  txs.forEach(tx => {
+    const items = JSON.parse(tx.items_json || '[]');
+    items.forEach(item => {
+      const cat = item.category || 'General';
+      if (!map[cat]) map[cat] = 0;
+      map[cat] += (item.price_sell * item.quantity);
+    });
+  });
+
+  return Object.keys(map).map(cat => ({
+    name: cat,
+    value: map[cat]
+  }));
 }
 
 // --- Products ---
@@ -247,48 +313,163 @@ export function deleteProduct(id) {
   return db.prepare('DELETE FROM products WHERE id = ?').run(id);
 }
 
+export function importProductsFromCSV(filePath) {
+  try {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const lines = content.split('\n');
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+
+    // Expected headers: name, sku, category, cost, price, stock, warranty
+    // Helper to find index
+    const idx = (key) => headers.findIndex(h => h.includes(key));
+
+    const iName = idx('name');
+    const iSku = idx('sku');
+    const iCat = idx('category');
+    const iCost = idx('cost') > -1 ? idx('cost') : idx('buy');
+    const iPrice = idx('price') > -1 ? idx('price') : idx('sell');
+    const iStock = idx('stock');
+    const iWar = idx('warranty');
+
+    if (iName === -1 || iPrice === -1) throw new Error("CSV must have at least 'Name' and 'Price' columns");
+
+    let count = 0;
+    const insert = db.prepare(`
+      INSERT INTO products (name, sku, category, price_buy, price_sell, stock, warranty, image)
+      VALUES (?, ?, ?, ?, ?, ?, ?, '')
+    `);
+
+    const runImport = db.transaction(() => {
+      for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+
+        // Simple CSV parser (doesn't handle commas in quotes perfectly but works for simple exports)
+        // Better to use regex or library, but keeping deps low.
+        // Let's assume standard CSV from our export.
+        const cols = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || lines[i].split(',');
+        const clean = (val) => val ? val.replace(/^"|"$/g, '').trim() : '';
+
+        // Fallback for simple split if regex fails
+        const row = cols.length >= headers.length ? cols : lines[i].split(',');
+
+        const name = clean(row[iName]);
+        let sku = iSku > -1 ? clean(row[iSku]) : '';
+        const category = iCat > -1 ? clean(row[iCat]) : 'General';
+        const cost = iCost > -1 ? parseFloat(clean(row[iCost])) || 0 : 0;
+        const price = iPrice > -1 ? parseFloat(clean(row[iPrice])) || 0 : 0;
+        const stock = iStock > -1 ? parseInt(clean(row[iStock])) || 0 : 0;
+        const warranty = iWar > -1 ? clean(row[iWar]) : '';
+
+        if (!name) continue;
+
+        if (!sku) {
+           sku = `IMP-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+        }
+
+        try {
+          insert.run(name, sku, category, cost, price, stock, warranty);
+          count++;
+        } catch (e) {
+          console.warn(`Skipping duplicate or invalid row ${i}: ${name}`);
+        }
+      }
+    });
+
+    runImport();
+    return { success: true, count };
+  } catch (err) {
+    console.error("Import Error:", err);
+    throw err;
+  }
+}
+
 // --- Transactions ---
 export function createTransaction(data) {
-  const { items, customer, total, paymentMethod, discount, pointsUsed } = data; 
+  const { items, customer, total, paymentMethod, discount, pointsUsed, paymentDetails, customerId } = data;
   const timestamp = new Date().toISOString();
   const itemsJson = JSON.stringify(items);
   let profit = 0;
   items.forEach(item => { profit += (item.price_sell - item.price_buy) * item.quantity; });
   
   if (discount) profit -= discount;
-  // If points used (1 point = 1 LKR discount logic, or passed as discount value? 
-  // Let's assume pointsUsed is the NUMBER of points, and we already reduced 'total' in frontend.
-  // Profit might be affected if points cover cost? Usually points are a marketing expense. 
-  // We'll leave profit calculation simple for now.
+
+  // Format payment details if provided
+  const paymentDetailsStr = paymentDetails ? JSON.stringify(paymentDetails) : null;
+
+  // Try to find customer ID if not provided but name is
+  let finalCustomerId = customerId;
+  if (!finalCustomerId && customer) {
+     const c = db.prepare('SELECT id FROM customers WHERE name = ?').get(customer);
+     if (c) finalCustomerId = c.id;
+  }
 
   const performTx = db.transaction(() => {
     const deduct = db.prepare('UPDATE products SET stock = stock - ? WHERE id = ?');
     for (const item of items) deduct.run(item.quantity, item.id);
 
     const insert = db.prepare(`
-      INSERT INTO transactions (timestamp, total, profit, customer_name, items_json, payment_method, discount)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO transactions (timestamp, total, profit, customer_name, items_json, payment_method, discount, payment_details, customer_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     
     if (customer && customer !== 'Walk-in') {
-       // Deduct used points
        if (pointsUsed > 0) {
          db.prepare('UPDATE customers SET points = points - ? WHERE name = ?').run(pointsUsed, customer);
        }
-
-       // Add new points based on PAID total
        const pointsEarned = Math.floor(total / 100); 
        db.prepare('UPDATE customers SET points = points + ? WHERE name = ?').run(pointsEarned, customer);
     }
     
-    return insert.run(timestamp, total, profit, customer || 'Walk-in', itemsJson, paymentMethod || 'Cash', discount || 0);
+    const res = insert.run(
+      timestamp,
+      total,
+      profit,
+      customer || 'Walk-in',
+      itemsJson,
+      paymentMethod || 'Cash',
+      discount || 0,
+      paymentDetailsStr,
+      finalCustomerId
+    );
+
+    // We can't easily access the current user here unless passed.
+    // Ideally, we should update the signature or let the frontend log it.
+    // But for now, let's assume if it's not passed, we log generic.
+    // However, the caller should ideally pass operator info.
+
+    return res;
   });
   return performTx();
 }
 
 export function getTransactions() {
   const txs = db.prepare('SELECT * FROM transactions ORDER BY timestamp DESC').all();
-  return txs.map(tx => ({ ...tx, items: JSON.parse(tx.items_json || '[]') }));
+  return txs.map(tx => ({
+    ...tx,
+    items: JSON.parse(tx.items_json || '[]'),
+    paymentDetails: tx.payment_details ? JSON.parse(tx.payment_details) : null
+  }));
+}
+
+export function getCustomerHistory(customerId) {
+  // If we have IDs, use them. Fallback to name match for legacy data
+  if (typeof customerId === 'number') {
+     const txs = db.prepare('SELECT * FROM transactions WHERE customer_id = ? ORDER BY timestamp DESC').all(customerId);
+     if (txs.length > 0) {
+        return txs.map(tx => ({ ...tx, items: JSON.parse(tx.items_json || '[]') }));
+     }
+  }
+
+  // Fallback: try to find customer name from ID and search by name (handling legacy data)
+  if (typeof customerId === 'number') {
+     const c = db.prepare('SELECT name FROM customers WHERE id = ?').get(customerId);
+     if (c) {
+        const txs = db.prepare('SELECT * FROM transactions WHERE customer_name = ? ORDER BY timestamp DESC').all(c.name);
+        return txs.map(tx => ({ ...tx, items: JSON.parse(tx.items_json || '[]') }));
+     }
+  }
+
+  return [];
 }
 
 export function updateTransaction(data) {
@@ -322,6 +503,62 @@ export function updateTransaction(data) {
   });
 
   return performUpdate();
+}
+
+export function refundTransaction(id, reason, operatorName) {
+  const doRefund = db.transaction(() => {
+    const tx = db.prepare('SELECT * FROM transactions WHERE id = ?').get(id);
+    if (!tx) throw new Error("Transaction not found");
+    if (tx.payment_method === 'Refunded') throw new Error("Already refunded");
+
+    const items = JSON.parse(tx.items_json || '[]');
+
+    // 1. Restore Stock
+    const restore = db.prepare('UPDATE products SET stock = stock + ? WHERE id = ?');
+    items.forEach(item => restore.run(item.quantity, item.id));
+
+    // 2. Revert Points (if any)
+    // Heuristic: If we gave points, take them back. If they used points, give them back?
+    // This is complex. For now, let's just deduct points earned from this sale.
+    if (tx.customer_name && tx.customer_name !== 'Walk-in') {
+      const pointsEarned = Math.floor(tx.total / 100);
+      db.prepare('UPDATE customers SET points = points - ? WHERE name = ?').run(pointsEarned, tx.customer_name);
+    }
+
+    // 3. Mark as Refunded (Set Total to 0 or Negative? or just status?)
+    // Best practice: Update method to 'Refunded' and maybe add a negative transaction?
+    // For simplicity in this system: Update method to 'Refunded' and keep record but exclude from revenue sums in future queries if needed.
+    // OR: Insert a NEGATIVE transaction.
+    // Let's Insert a Negative Transaction for accounting purposes.
+
+    const refundTotal = -tx.total;
+    const refundProfit = -tx.profit;
+    const refundItems = items.map(i => ({...i, quantity: -i.quantity}));
+
+    db.prepare(`
+      INSERT INTO transactions (timestamp, total, profit, customer_name, items_json, payment_method, discount, payment_details, customer_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      new Date().toISOString(),
+      refundTotal,
+      refundProfit,
+      tx.customer_name,
+      JSON.stringify(refundItems),
+      'Refund',
+      0,
+      JSON.stringify({ reason }),
+      tx.customer_id
+    );
+
+    // Update Original to mark as Refunded (optional, or just leave it)
+    // Let's append (Refunded) to payment method of original to avoid double counting if we query all.
+    // Actually, simply adding a negative transaction balances the books.
+
+    logAction(operatorName, 'REFUND', `Refunded Transaction #${id}. Reason: ${reason}`);
+    return { success: true };
+  });
+
+  return doRefund();
 }
 
 // --- Cart Hold/Recall ---
@@ -368,7 +605,6 @@ export function addRepair(repair) {
   const { customer_id, device, issue, cost } = repair;
   const created_at = new Date().toISOString();
   
-  // Check if legacy 'date_in' column exists (to support old DB schemas)
   const columns = db.prepare('PRAGMA table_info(repairs)').all().map(c => c.name);
   const hasDateIn = columns.includes('date_in');
 
@@ -408,7 +644,8 @@ export function factoryReset() {
     db.prepare('DELETE FROM repairs').run();
     db.prepare('DELETE FROM customers').run();
     db.prepare('DELETE FROM products').run();
-    db.prepare('DELETE FROM sqlite_sequence').run(); // Reset auto-increment IDs
+    db.prepare('DELETE FROM settings').run();
+    db.prepare('DELETE FROM sqlite_sequence').run();
   });
   reset();
   return { success: true };
@@ -416,25 +653,25 @@ export function factoryReset() {
 
 export function restoreDatabase(backupPath) {
   try {
-    // Attach backup DB
     db.prepare(`ATTACH DATABASE ? AS backup`).run(backupPath);
     
     const restore = db.transaction(() => {
-      // Clear Main Tables
       db.prepare('DELETE FROM main.products').run();
       db.prepare('DELETE FROM main.customers').run();
       db.prepare('DELETE FROM main.transactions').run();
       db.prepare('DELETE FROM main.repairs').run();
+      db.prepare('DELETE FROM main.settings').run();
       db.prepare('DELETE FROM main.sqlite_sequence').run();
 
-      // Copy Data from Backup
       db.prepare('INSERT INTO main.products SELECT * FROM backup.products').run();
       db.prepare('INSERT INTO main.customers SELECT * FROM backup.customers').run();
       db.prepare('INSERT INTO main.transactions SELECT * FROM backup.transactions').run();
       db.prepare('INSERT INTO main.repairs SELECT * FROM backup.repairs').run();
       
-      // Copy sqlite_sequence if it exists in backup (to preserve ID counters)
-      // Check if backup has sqlite_sequence
+      try {
+         db.prepare('INSERT INTO main.settings SELECT * FROM backup.settings').run();
+      } catch (e) { console.log("No settings in backup"); }
+
       const hasSequence = db.prepare("SELECT name FROM backup.sqlite_master WHERE type='table' AND name='sqlite_sequence'").get();
       if (hasSequence) {
          db.prepare('INSERT INTO main.sqlite_sequence SELECT * FROM backup.sqlite_sequence').run();
@@ -445,7 +682,6 @@ export function restoreDatabase(backupPath) {
     db.prepare('DETACH DATABASE backup').run();
     return { success: true };
   } catch (err) {
-    // Ensure we detach even on error to avoid lock
     try { db.prepare('DETACH DATABASE backup').run(); } catch (e) {}
     throw err;
   }

@@ -1,5 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeAll } from 'vitest';
 import React from 'react';
 import Invoice from '../Invoice';
 
@@ -9,6 +9,20 @@ vi.mock('lucide-react', () => ({
 }));
 
 describe('Invoice Component', () => {
+  // Setup window.api mock
+  beforeAll(() => {
+    window.api = {
+      getSettings: vi.fn().mockResolvedValue({
+        storeName: 'Test Store',
+        address: 'Test Address',
+        phone: '1234567890',
+        email: 'test@example.com',
+        footerText: 'Test Footer'
+      })
+    };
+    window.print = vi.fn();
+  });
+
   const mockData = {
     id: 123,
     date: '2023-10-27T10:00:00.000Z',
@@ -25,17 +39,24 @@ describe('Invoice Component', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('renders invoice details when data is provided', () => {
+  it('renders invoice details when data is provided', async () => {
     render(<Invoice data={mockData} />);
     
-    expect(screen.getByText(/INVOICE #123/i)).toBeInTheDocument();
+    // Check for Invoice text (multiple occurrences is fine)
+    expect(screen.getAllByText(/Invoice/i).length).toBeGreaterThan(0);
+
+    expect(screen.getByText(/#123/i)).toBeInTheDocument();
     expect(screen.getByText(/Gaming Mouse/i)).toBeInTheDocument();
-    // Use a flexible matcher for the total because formatting might vary by locale
-    // We expect "11,000" or similar.
+
+    // Check if store settings are applied (async)
+    await waitFor(() => {
+        expect(screen.getByText('Test Store')).toBeInTheDocument();
+    });
+
     expect(screen.getAllByText(/11,000/)[0]).toBeInTheDocument(); 
   });
 
-  it('calls onClose when close button is clicked', () => {
+  it('calls onClose when close button is clicked', async () => {
     const handleClose = vi.fn();
     render(<Invoice data={mockData} onClose={handleClose} />);
     

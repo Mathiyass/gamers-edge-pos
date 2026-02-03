@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Package, Plus, Search, Trash2, Save, X, Image as ImageIcon, Edit, Filter, TrendingUp, AlertTriangle, Download } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Package, Plus, Search, Trash2, Save, X, Image as ImageIcon, Edit, Filter, TrendingUp, AlertTriangle, Download, UploadCloud } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 
 export default function Stock() {
   const [products, setProducts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBarcodeModalOpen, setIsBarcodeModalOpen] = useState(false);
+  const [selectedProductForBarcode, setSelectedProductForBarcode] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [isEditing, setIsEditing] = useState(false);
@@ -31,7 +33,7 @@ export default function Stock() {
     if (!window.api) return;
     try {
       const res = await window.api.getProducts();
-      setProducts(res);
+      setProducts(res || []);
     } catch (err) {
       console.error("Failed to load products", err);
     }
@@ -68,11 +70,30 @@ export default function Stock() {
     setIsModalOpen(true);
   };
 
+  const openBarcodeModal = (product) => {
+    setSelectedProductForBarcode(product);
+    setIsBarcodeModalOpen(true);
+  };
+
+  const printBarcode = () => {
+    const content = document.getElementById('printable-barcode').innerHTML;
+    const win = window.open('', '', 'height=500,width=500');
+    win.document.write('<html><head><title>Print Barcode</title></head><body style="display:flex;justify-content:center;align-items:center;height:100vh;">');
+    win.document.write(content);
+    win.document.write('</body></html>');
+    win.document.close();
+    win.focus();
+    setTimeout(() => {
+        win.print();
+        win.close();
+    }, 500);
+  };
+
   const exportCSV = () => {
     const headers = ["ID", "Name", "SKU", "Category", "Cost", "Price", "Stock", "Warranty"];
     const rows = products.map(p => [
       p.id,
-      `"${p.name.replace(/"/g, '""')}"`, // Escape quotes
+      `"${p.name.replace(/"/g, '""')}"`,
       p.sku,
       p.category,
       p.price_buy,
@@ -94,6 +115,20 @@ export default function Stock() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleImportCSV = async () => {
+    try {
+      const res = await window.api.importProductsFromCSV();
+      if (res.success) {
+        alert(`Imported ${res.count} products successfully!`);
+        loadProducts();
+      } else if (res.message && res.message !== 'Cancelled') {
+        alert(res.message);
+      }
+    } catch (e) {
+      alert("Import Failed: " + e.message);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -139,7 +174,7 @@ export default function Stock() {
   // Filter Logic
   const filtered = products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          p.sku.toLowerCase().includes(searchTerm.toLowerCase());
+                          (p.sku || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
     
     // Low Stock Filter
@@ -155,9 +190,9 @@ export default function Stock() {
   
   const allCategories = ['All', ...categories];
 
-  // Stats for Header
-  const totalStockValue = products.reduce((acc, p) => acc + (p.price_buy * p.stock), 0);
-  const potentialProfit = products.reduce((acc, p) => acc + ((p.price_sell - p.price_buy) * p.stock), 0);
+  // Stats for Header (Safe Math)
+  const totalStockValue = products.reduce((acc, p) => acc + ((p.price_buy || 0) * (p.stock || 0)), 0);
+  const potentialProfit = products.reduce((acc, p) => acc + (((p.price_sell || 0) - (p.price_buy || 0)) * (p.stock || 0)), 0);
 
   return (
     <div className="h-full flex flex-col bg-[#0f172a] text-slate-200 font-sans selection:bg-cyan-500/30">
@@ -229,6 +264,13 @@ export default function Stock() {
                   className="bg-slate-900 border border-slate-700 text-sm rounded-lg pl-9 pr-4 py-2 w-64 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition-all placeholder:text-slate-600"
                 />
              </div>
+             <button
+               onClick={handleImportCSV}
+               className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg text-sm font-bold flex items-center gap-2 border border-slate-700 transition-all"
+               title="Import CSV"
+             >
+               <UploadCloud size={16} /> Import
+             </button>
              <button 
                onClick={exportCSV}
                className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg text-sm font-bold flex items-center gap-2 border border-slate-700 transition-all"
@@ -266,8 +308,8 @@ export default function Stock() {
                <tbody className="text-sm divide-y divide-slate-800/50">
                  <AnimatePresence>
                    {filtered.map(p => {
-                     const profit = p.price_sell - p.price_buy;
-                     const profitPercent = p.price_buy > 0 ? ((profit / p.price_buy) * 100).toFixed(1) : 0;
+                     const profit = (p.price_sell || 0) - (p.price_buy || 0);
+                     const profitPercent = (p.price_buy || 0) > 0 ? ((profit / p.price_buy) * 100).toFixed(1) : 0;
                      const isLowStock = p.stock < 5;
 
                      return (
@@ -304,10 +346,10 @@ export default function Stock() {
                          </td>
 
                          {/* Cost */}
-                         <td className="p-4 text-right font-mono text-slate-500">{p.price_buy.toLocaleString()}</td>
+                         <td className="p-4 text-right font-mono text-slate-500">{(p.price_buy || 0).toLocaleString()}</td>
                          
                          {/* Price */}
-                         <td className="p-4 text-right font-mono font-bold text-white">{p.price_sell.toLocaleString()}</td>
+                         <td className="p-4 text-right font-mono font-bold text-white">{(p.price_sell || 0).toLocaleString()}</td>
 
                          {/* Profit */}
                          <td className="p-4 text-right font-mono">
@@ -332,6 +374,7 @@ export default function Stock() {
                          {/* Actions */}
                          <td className="p-4 text-right pr-6">
                             <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button onClick={() => openBarcodeModal(p)} className="p-2 hover:bg-slate-800 text-slate-500 hover:text-white rounded-lg transition-colors" title="Print Barcode">Label</button>
                               <button onClick={() => openEditModal(p)} className="p-2 hover:bg-cyan-500/10 text-slate-500 hover:text-cyan-400 rounded-lg transition-colors"><Edit size={16} /></button>
                               <button onClick={() => handleDelete(p.id)} className="p-2 hover:bg-red-500/10 text-slate-500 hover:text-red-400 rounded-lg transition-colors"><Trash2 size={16} /></button>
                             </div>
@@ -346,7 +389,7 @@ export default function Stock() {
         </div>
       </div>
 
-      {/* Edit/Add Modal - Keeping simple clean dark aesthetics */}
+      {/* Edit/Add Modal */}
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
@@ -366,6 +409,7 @@ export default function Stock() {
               
               <div className="p-8 overflow-y-auto">
                   <form id="product-form" onSubmit={handleSubmit} className="space-y-6">
+                    {/* ... Form Content (Safe) ... */}
                     <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-1">
                           <label className="text-[10px] uppercase text-cyan-500 font-bold tracking-wider">Product Name</label>
@@ -439,6 +483,34 @@ export default function Stock() {
                       <Save size={16} /> {isEditing ? 'Save Changes' : 'Add to Inventory'}
                   </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Barcode Modal */}
+      <AnimatePresence>
+        {isBarcodeModalOpen && selectedProductForBarcode && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white text-black w-full max-w-sm rounded-2xl shadow-2xl p-6 flex flex-col items-center"
+            >
+               <h3 className="text-lg font-bold mb-4">Print Label</h3>
+               <div id="printable-barcode" className="p-4 border border-gray-200 rounded mb-6 flex flex-col items-center bg-white">
+                  <div className="text-center font-bold mb-1 text-black">{selectedProductForBarcode.name.substring(0, 20)}</div>
+                  <img
+                      src={`https://bwipjs-api.metafloor.org/?bcid=code128&text=${selectedProductForBarcode.sku || selectedProductForBarcode.id}&scale=3&height=10&incltext=1`}
+                      alt="Barcode"
+                  />
+                  <div className="text-center font-bold mt-1 text-black">LKR {(selectedProductForBarcode.price_sell || 0).toLocaleString()}</div>
+               </div>
+               <div className="flex gap-3 w-full">
+                  <button onClick={() => setIsBarcodeModalOpen(false)} className="flex-1 py-3 rounded-lg bg-gray-100 hover:bg-gray-200 font-bold text-gray-600 transition-colors">Close</button>
+                  <button onClick={printBarcode} className="flex-1 py-3 rounded-lg bg-black text-white hover:bg-gray-800 font-bold transition-colors flex items-center justify-center gap-2">
+                     Print
+                  </button>
+               </div>
             </motion.div>
           </div>
         )}

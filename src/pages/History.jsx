@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { History as HistoryIcon, Search, Calendar, FileText, Trash2, Save, X, RotateCcw, TrendingUp } from 'lucide-react';
+import { History as HistoryIcon, Search, Calendar, FileText, Trash2, Save, X, RotateCcw, TrendingUp, RefreshCw, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
 export default function History() {
+  const { user } = useAuth();
   const [transactions, setTransactions] = useState([]);
   const [selectedTx, setSelectedTx] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -10,6 +12,10 @@ export default function History() {
   // Edit Mode State
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState(null);
+
+  // Refund State
+  const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
+  const [refundReason, setRefundReason] = useState('');
 
   const loadHistory = async () => {
     if (window.api) {
@@ -56,6 +62,20 @@ export default function History() {
       } catch (err) {
         alert("Update Failed: " + err.message);
       }
+  };
+
+  const handleRefund = async () => {
+    if (!refundReason) return alert("Please enter a reason.");
+    try {
+       await window.api.refundTransaction(selectedTx.id, refundReason, user.name);
+       alert("Refund processed successfully.");
+       setIsRefundModalOpen(false);
+       setRefundReason('');
+       setSelectedTx(null);
+       loadHistory();
+    } catch (e) {
+       alert("Refund Failed: " + e.message);
+    }
   };
 
   const filtered = transactions.filter(tx => 
@@ -289,11 +309,21 @@ export default function History() {
                         )}
                     </div>
 
-                    <div className="p-6 border-t border-slate-800 bg-[#0f172a]">
+                    <div className="p-6 border-t border-slate-800 bg-[#0f172a] space-y-3">
                         {!editMode ? (
-                             <button onClick={startEdit} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 transition-all shadow-lg">
-                                 <FileText size={18} /> Edit / Correct Invoice
-                             </button>
+                             <>
+                                <button onClick={startEdit} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 transition-all shadow-lg">
+                                    <FileText size={18} /> Edit / Correct Invoice
+                                </button>
+                                {selectedTx.payment_method !== 'Refunded' && selectedTx.payment_method !== 'Refund' && (
+                                    <button
+                                        onClick={() => setIsRefundModalOpen(true)}
+                                        className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 transition-all"
+                                    >
+                                        <RefreshCw size={18} /> Process Refund
+                                    </button>
+                                )}
+                             </>
                         ) : (
                             <div className="flex gap-4">
                                 <button onClick={() => setEditMode(false)} className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3.5 rounded-xl transition-colors">Cancel</button>
@@ -304,6 +334,36 @@ export default function History() {
                         )}
                     </div>
                 </motion.div>
+            )}
+         </AnimatePresence>
+
+         {/* Refund Modal */}
+         <AnimatePresence>
+            {isRefundModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <motion.div initial={{scale:0.95}} animate={{scale:1}} className="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+                        <div className="flex items-center gap-3 mb-4 text-red-400">
+                            <AlertCircle size={24} />
+                            <h3 className="text-xl font-bold text-white">Confirm Refund</h3>
+                        </div>
+                        <p className="text-slate-400 text-sm mb-4">
+                            This will reverse the transaction, restore stock, and deduct any loyalty points earned. This action is irreversible.
+                        </p>
+                        <div className="mb-6">
+                            <label className="text-xs uppercase font-bold text-slate-500 mb-2 block">Reason for Refund</label>
+                            <input
+                                autoFocus
+                                className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white outline-none focus:border-red-500"
+                                placeholder="e.g. Defective Item"
+                                value={refundReason} onChange={e => setRefundReason(e.target.value)}
+                            />
+                        </div>
+                        <div className="flex gap-3">
+                            <button onClick={() => setIsRefundModalOpen(false)} className="flex-1 py-3 rounded-lg bg-slate-800 text-slate-300 font-bold hover:bg-slate-700">Cancel</button>
+                            <button onClick={handleRefund} className="flex-1 py-3 rounded-lg bg-red-600 text-white font-bold hover:bg-red-500 shadow-lg shadow-red-900/20">Confirm Refund</button>
+                        </div>
+                    </motion.div>
+                </div>
             )}
          </AnimatePresence>
       </div>
