@@ -125,12 +125,18 @@ const Invoice = ({ data, onClose }) => {
           <div className="space-y-3">
              <div className="flex justify-between text-slate-500 font-medium">
                 <span>Subtotal</span>
-                <span>{(data.total + (data.discount||0)).toLocaleString()}</span>
+                <span>{(data.total - (data.tax||0) + (data.discount||0)).toLocaleString()}</span>
              </div>
              {data.discount > 0 && (
                <div className="flex justify-between text-red-500 font-medium">
                   <span>Discount</span>
                   <span>-{data.discount.toLocaleString()}</span>
+               </div>
+             )}
+             {data.tax > 0 && (
+               <div className="flex justify-between text-slate-500 font-medium">
+                  <span>Tax</span>
+                  <span>+{data.tax.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                </div>
              )}
              <div className="flex justify-between items-center border-t-2 border-cyan-600 pt-4 mt-4">

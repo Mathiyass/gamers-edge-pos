@@ -100,6 +100,7 @@ export function initDb() {
     { table: 'transactions', col: 'discount', def: 'REAL DEFAULT 0' },
     { table: 'transactions', col: 'payment_details', def: 'TEXT' },
     { table: 'transactions', col: 'customer_id', def: 'INTEGER' },
+    { table: 'transactions', col: 'tax', def: 'REAL DEFAULT 0' },
     { table: 'customers', col: 'points', def: 'INTEGER DEFAULT 0' },
     { table: 'repairs', col: 'customer_id', def: 'INTEGER' },
     { table: 'repairs', col: 'created_at', def: "TEXT DEFAULT ''" }
@@ -251,6 +252,17 @@ export function getSalesByCategory() {
   }));
 }
 
+export function getSalesByHour() {
+  // Aggregate sales by hour of day (00-23) for the last 30 days
+  return db.prepare(`
+    SELECT strftime('%H', timestamp) as hour, SUM(total) as sales
+    FROM transactions
+    WHERE timestamp >= date('now', '-30 days')
+    GROUP BY hour
+    ORDER BY hour ASC
+  `).all();
+}
+
 // --- Products ---
 export function getProducts() {
   return db.prepare('SELECT * FROM products ORDER BY name ASC').all();
@@ -361,12 +373,20 @@ export function importProductsFromCSV(filePath) {
 
 // --- Transactions ---
 export function createTransaction(data) {
-  const { items, customer, total, paymentMethod, discount, pointsUsed, paymentDetails, customerId } = data;
+  const { items, customer, total, tax, paymentMethod, discount, pointsUsed, paymentDetails, customerId } = data;
   const timestamp = new Date().toISOString();
   const itemsJson = JSON.stringify(items);
   let profit = 0;
   items.forEach(item => { profit += (item.price_sell - item.price_buy) * item.quantity; });
   
+  // Profit = (Sell - Buy) - Discount - Tax (Tax is passed through, not profit)
+  // Actually, usually Profit = Net Sales - COGS.
+  // Net Sales = Total - Tax.
+  // So Profit = (Total - Tax) - COGS.
+  // The 'total' passed in usually includes Tax.
+  // Let's assume profit calc needs adjustment if tax is involved.
+  // If total includes tax, we should subtract tax from profit calculation if we consider profit as pre-tax or if we just want margin.
+  // For simplicity, let's just subtract discount.
   if (discount) profit -= discount;
 
   // Format payment details if provided
@@ -384,8 +404,8 @@ export function createTransaction(data) {
     for (const item of items) deduct.run(item.quantity, item.id);
 
     const insert = db.prepare(`
-      INSERT INTO transactions (timestamp, total, profit, customer_name, items_json, payment_method, discount, payment_details, customer_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO transactions (timestamp, total, profit, customer_name, items_json, payment_method, discount, payment_details, customer_id, tax)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     
     if (customer && customer !== 'Walk-in') {
@@ -405,7 +425,8 @@ export function createTransaction(data) {
       paymentMethod || 'Cash',
       discount || 0,
       paymentDetailsStr,
-      finalCustomerId
+      finalCustomerId,
+      tax || 0
     );
   });
   return performTx();

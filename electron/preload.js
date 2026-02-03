@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('api', {
   getRecentActivity: () => ipcRenderer.invoke('db:get-recent-activity'),
   getTopProducts: () => ipcRenderer.invoke('db:get-top-products'),
   getSalesByCategory: () => ipcRenderer.invoke('db:get-sales-by-category'),
+  getSalesByHour: () => ipcRenderer.invoke('db:get-sales-by-hour'),
 
   // Products
   getProducts: () => ipcRenderer.invoke('db:get-products'),

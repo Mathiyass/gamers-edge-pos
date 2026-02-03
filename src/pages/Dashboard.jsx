@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { DollarSign, TrendingUp, ShoppingBag, AlertTriangle, Activity } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
@@ -9,6 +9,7 @@ export default function Dashboard() {
   const [topProducts, setTopProducts] = useState([]);
   const [chartData, setChartData] = useState([]);
   const [categoryData, setCategoryData] = useState([]);
+  const [hourlyData, setHourlyData] = useState([]);
   const navigate = useNavigate();
 
   const COLORS = ['#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1'];
@@ -21,11 +22,13 @@ export default function Dashboard() {
       const topItems = await window.api.getTopProducts();
       const history = await window.api.getTransactions();
       const catData = await window.api.getSalesByCategory();
+      const hourly = await window.api.getSalesByHour();
 
       setStats(dashboardStats);
       setActivity(recentActivity);
       setTopProducts(topItems || []);
       setCategoryData(catData || []);
+      setHourlyData(hourly || []);
 
       // Process Chart Data (Last 7 Days)
       const last7Days = [...Array(7)].map((_, i) => {
@@ -160,6 +163,26 @@ export default function Dashboard() {
                     </PieChart>
                 </ResponsiveContainer>
              </div>
+          </div>
+
+          {/* Hourly Sales Bar Chart */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg h-96">
+            <h3 className="text-xl font-bold text-white mb-6">Peak Hours (Last 30 Days)</h3>
+            <div className="h-full pb-8">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={hourlyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                  <XAxis dataKey="hour" stroke="#64748b" tick={{fontSize: 12}} tickLine={false} axisLine={false}
+                         tickFormatter={(h) => `${h}:00`}/>
+                  <YAxis stroke="#64748b" tick={{fontSize: 12}} tickLine={false} axisLine={false} />
+                  <Tooltip
+                    cursor={{fill: '#1e293b'}}
+                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#fff' }}
+                  />
+                  <Bar dataKey="sales" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
           {/* Top Selling Products */}
