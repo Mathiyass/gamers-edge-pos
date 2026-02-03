@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Plus, Search, Trash2, Save, X, Image as ImageIcon, Edit, Filter, TrendingUp, AlertTriangle, Download } from 'lucide-react';
+import { Package, Plus, Search, Trash2, Save, X, Image as ImageIcon, Edit, Filter, TrendingUp, AlertTriangle, Download, UploadCloud } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 
@@ -94,6 +94,20 @@ export default function Stock() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleImportCSV = async () => {
+    try {
+      const res = await window.api.importProductsFromCSV();
+      if (res.success) {
+        alert(`Imported ${res.count} products successfully!`);
+        loadProducts();
+      } else if (res.message && res.message !== 'Cancelled') {
+        alert(res.message);
+      }
+    } catch (e) {
+      alert("Import Failed: " + e.message);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -229,6 +243,13 @@ export default function Stock() {
                   className="bg-slate-900 border border-slate-700 text-sm rounded-lg pl-9 pr-4 py-2 w-64 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition-all placeholder:text-slate-600"
                 />
              </div>
+             <button
+               onClick={handleImportCSV}
+               className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg text-sm font-bold flex items-center gap-2 border border-slate-700 transition-all"
+               title="Import CSV"
+             >
+               <UploadCloud size={16} /> Import
+             </button>
              <button 
                onClick={exportCSV}
                className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg text-sm font-bold flex items-center gap-2 border border-slate-700 transition-all"

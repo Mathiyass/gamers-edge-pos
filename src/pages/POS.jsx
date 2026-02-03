@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, ShoppingCart, Trash2, Plus, Minus, CreditCard, User, List, X, PauseCircle, PlayCircle, Percent, Gift, Award } from 'lucide-react';
+import { Search, ShoppingCart, Trash2, Plus, Minus, CreditCard, User, List, X, PauseCircle, PlayCircle, Percent, Gift, Award, Split, LayoutGrid } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Invoice from '../components/Invoice';
 import { playSound } from '../utils/sounds';
@@ -13,10 +13,14 @@ export default function POS() {
   // Checkout State
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [customer, setCustomer] = useState('');
-  const [customerPoints, setCustomerPoints] = useState(0); // Available points
-  const [usePoints, setUsePoints] = useState(false); // Toggle
+  const [customerPoints, setCustomerPoints] = useState(0);
+  const [usePoints, setUsePoints] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [printData, setPrintData] = useState(null);
+
+  // Split Payment State
+  const [isSplitPayment, setIsSplitPayment] = useState(false);
+  const [splitAmounts, setSplitAmounts] = useState({ cash: 0, card: 0 });
 
   // Features State
   const [discount, setDiscount] = useState(0);
@@ -24,23 +28,20 @@ export default function POS() {
   const [isRecallModalOpen, setIsRecallModalOpen] = useState(false);
   const [heldCarts, setHeldCarts] = useState([]);
 
-  // Refs for Keyboard Handling
+  // Refs
   const searchInputRef = useRef(null);
 
   // --- Keyboard Shortcuts & Scanner Logic ---
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // F2: Focus Search
       if (e.key === 'F2') {
         e.preventDefault();
         searchInputRef.current?.focus();
       }
-      // F12: Checkout
       if (e.key === 'F12' && cart.length > 0 && !isCheckoutOpen) {
         e.preventDefault();
         setIsCheckoutOpen(true);
       }
-      // Esc: Close Modals
       if (e.key === 'Escape') {
         if (isCheckoutOpen) setIsCheckoutOpen(false);
         if (isDiscountModalOpen) setIsDiscountModalOpen(false);
@@ -72,7 +73,6 @@ export default function POS() {
   // --- Customer Point Lookup ---
   useEffect(() => {
     if (customer && window.api) {
-        // Debounce simple lookup
         const timer = setTimeout(async () => {
             try {
                 const customers = await window.api.getCustomers();
@@ -118,23 +118,36 @@ export default function POS() {
 
   // --- Totals ---
   const subtotal = cart.reduce((sum, item) => sum + (item.price_sell * item.quantity), 0);
-  
-  // Points Logic: 1 Point = 1 LKR (Simple)
   const maxPointsRedeemable = Math.min(customerPoints, subtotal - discount);
   const pointsDiscount = usePoints ? maxPointsRedeemable : 0;
-  
   const total = Math.max(0, subtotal - discount - pointsDiscount);
+
+  // Initialize Split Amount when checkout opens
+  useEffect(() => {
+    if (isCheckoutOpen) {
+       setSplitAmounts({ cash: total, card: 0 });
+    }
+  }, [isCheckoutOpen, total]);
 
   const handleCheckout = async (e) => {
     e.preventDefault();
     try {
+      if (isSplitPayment) {
+         const sum = (parseFloat(splitAmounts.cash)||0) + (parseFloat(splitAmounts.card)||0);
+         if (Math.abs(sum - total) > 1) {
+            alert(`Split amounts must equal Total (${total.toLocaleString()})`);
+            return;
+         }
+      }
+
       const result = await window.api.createTransaction({
         items: cart,
         total,
-        discount: discount + pointsDiscount, // Total reduction
+        discount: discount + pointsDiscount,
         pointsUsed: usePoints ? maxPointsRedeemable : 0,
         customer,
-        paymentMethod 
+        paymentMethod: isSplitPayment ? 'Split' : paymentMethod,
+        paymentDetails: isSplitPayment ? splitAmounts : null
       });
       
       const newInvoice = {
@@ -143,7 +156,8 @@ export default function POS() {
         total,
         discount: discount + pointsDiscount,
         customer,
-        paymentMethod,
+        paymentMethod: isSplitPayment ? 'Split' : paymentMethod,
+        paymentDetails: isSplitPayment ? splitAmounts : null,
         date: new Date().toISOString()
       };
       
@@ -156,6 +170,7 @@ export default function POS() {
       setDiscount(0);
       setUsePoints(false);
       setCustomerPoints(0);
+      setIsSplitPayment(false);
       setIsCheckoutOpen(false);
       
       const res = await window.api.getProducts();
@@ -196,7 +211,7 @@ export default function POS() {
 
   // --- Render ---
   const filteredProducts = products.filter(p => {
-    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.sku.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || (p.sku || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -383,31 +398,69 @@ export default function POS() {
                     </div>
 
                     <div className="mb-6">
-                      <label className="text-xs uppercase font-bold text-slate-500 mb-2 block">Payment Method</label>
-                      <div className="flex gap-4">
-                        <button
-                          type="button"
-                          onClick={() => setPaymentMethod('Cash')}
-                          className={`flex-1 py-3 rounded-xl border font-bold transition-all ${
-                            paymentMethod === 'Cash' 
-                            ? 'bg-cyan-600 border-cyan-500 text-white shadow-lg' 
-                            : 'bg-slate-950 border-slate-700 text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          Cash
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPaymentMethod('Card')}
-                          className={`flex-1 py-3 rounded-xl border font-bold transition-all ${
-                            paymentMethod === 'Card' 
-                            ? 'bg-cyan-600 border-cyan-500 text-white shadow-lg' 
-                            : 'bg-slate-950 border-slate-700 text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          Card
-                        </button>
+                      <div className="flex justify-between items-center mb-2">
+                         <label className="text-xs uppercase font-bold text-slate-500 block">Payment Method</label>
+                         <button
+                            type="button"
+                            onClick={() => setIsSplitPayment(!isSplitPayment)}
+                            className={`text-xs flex items-center gap-1 font-bold px-2 py-0.5 rounded transition-colors ${isSplitPayment ? 'bg-indigo-500 text-white' : 'bg-slate-800 text-indigo-400 border border-indigo-500/30'}`}
+                         >
+                            <Split size={12}/> Split Payment
+                         </button>
                       </div>
+
+                      {!isSplitPayment ? (
+                        <div className="flex gap-4">
+                            <button
+                            type="button"
+                            onClick={() => setPaymentMethod('Cash')}
+                            className={`flex-1 py-3 rounded-xl border font-bold transition-all ${
+                                paymentMethod === 'Cash'
+                                ? 'bg-cyan-600 border-cyan-500 text-white shadow-lg'
+                                : 'bg-slate-950 border-slate-700 text-slate-400 hover:text-white'
+                            }`}
+                            >
+                            Cash
+                            </button>
+                            <button
+                            type="button"
+                            onClick={() => setPaymentMethod('Card')}
+                            className={`flex-1 py-3 rounded-xl border font-bold transition-all ${
+                                paymentMethod === 'Card'
+                                ? 'bg-cyan-600 border-cyan-500 text-white shadow-lg'
+                                : 'bg-slate-950 border-slate-700 text-slate-400 hover:text-white'
+                            }`}
+                            >
+                            Card
+                            </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-3 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                           <div className="flex items-center gap-3">
+                              <span className="w-12 text-sm font-bold text-slate-400">Cash</span>
+                              <input
+                                type="number"
+                                className="flex-1 bg-slate-900 border border-slate-700 rounded-lg p-2 text-white outline-none focus:border-cyan-500"
+                                value={splitAmounts.cash}
+                                onChange={e => setSplitAmounts({...splitAmounts, cash: parseFloat(e.target.value)||0})}
+                              />
+                           </div>
+                           <div className="flex items-center gap-3">
+                              <span className="w-12 text-sm font-bold text-slate-400">Card</span>
+                              <input
+                                type="number"
+                                className="flex-1 bg-slate-900 border border-slate-700 rounded-lg p-2 text-white outline-none focus:border-cyan-500"
+                                value={splitAmounts.card}
+                                onChange={e => setSplitAmounts({...splitAmounts, card: parseFloat(e.target.value)||0})}
+                              />
+                           </div>
+                           <div className="text-right text-xs text-slate-500 pt-1">
+                              Remaining: <span className={`${Math.abs((splitAmounts.cash + splitAmounts.card) - total) > 1 ? 'text-red-400' : 'text-emerald-400'} font-bold`}>
+                                {(total - (splitAmounts.cash + splitAmounts.card)).toLocaleString()}
+                              </span>
+                           </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex justify-between mb-6 p-4 bg-slate-950 rounded-xl border border-slate-800">

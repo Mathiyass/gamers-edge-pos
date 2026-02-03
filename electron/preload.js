@@ -6,17 +6,20 @@ contextBridge.exposeInMainWorld('api', {
   getDashboardStats: () => ipcRenderer.invoke('db:get-dashboard-stats'),
   getRecentActivity: () => ipcRenderer.invoke('db:get-recent-activity'),
   getTopProducts: () => ipcRenderer.invoke('db:get-top-products'),
+  getSalesByCategory: () => ipcRenderer.invoke('db:get-sales-by-category'),
 
   // Products
   getProducts: () => ipcRenderer.invoke('db:get-products'),
   addProduct: (data) => ipcRenderer.invoke('db:add-product', data),
   updateProduct: (data) => ipcRenderer.invoke('db:update-product', data),
   deleteProduct: (id) => ipcRenderer.invoke('db:delete-product', id),
+  importProductsFromCSV: () => ipcRenderer.invoke('db:import-products-csv'),
 
   // Transactions
   createTransaction: (data) => ipcRenderer.invoke('db:process-sale', data),
   getTransactions: () => ipcRenderer.invoke('db:get-history'),
   updateTransaction: (data) => ipcRenderer.invoke('db:update-transaction', data),
+  getCustomerHistory: (id) => ipcRenderer.invoke('db:get-customer-history', id),
 
   // Cart Hold/Recall
   holdCart: (data) => ipcRenderer.invoke('db:hold-cart', data),
@@ -41,7 +44,9 @@ contextBridge.exposeInMainWorld('api', {
   updateRepairStatus: (id, status) => ipcRenderer.invoke('db:update-repair-status', {id, status}),
   deleteRepair: (id) => ipcRenderer.invoke('db:delete-repair', id),
 
-  // System
+  // Settings & System
+  getSettings: () => ipcRenderer.invoke('app:get-settings'),
+  updateSettings: (settings) => ipcRenderer.invoke('app:update-settings', settings),
   backupDatabase: () => ipcRenderer.invoke('app:backup'),
   factoryReset: () => ipcRenderer.invoke('app:factory-reset'),
   restoreDatabase: () => ipcRenderer.invoke('app:restore-backup')

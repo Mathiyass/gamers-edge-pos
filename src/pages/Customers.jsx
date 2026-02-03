@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, Search, Trophy, Mail, Phone, User, Trash2 } from 'lucide-react';
+import { UserPlus, Search, Trophy, Mail, Phone, User, Trash2, History, X } from 'lucide-react';
 
 export default function Customers() {
   const [customers, setCustomers] = useState([]);
   const [search, setSearch] = useState('');
   const [formData, setFormData] = useState({ name: '', phone: '', email: '' });
   const [loading, setLoading] = useState(false);
+
+  // History Modal State
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [customerHistory, setCustomerHistory] = useState([]);
 
   useEffect(() => {
     loadCustomers();
@@ -43,13 +48,25 @@ export default function Customers() {
     }
   };
 
+  const handleViewHistory = async (customer) => {
+    setSelectedCustomer(customer);
+    try {
+      const history = await window.api.getCustomerHistory(customer.id);
+      setCustomerHistory(history);
+      setHistoryModalOpen(true);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to load history");
+    }
+  };
+
   const filteredCustomers = customers.filter(c => 
     c.name.toLowerCase().includes(search.toLowerCase()) || 
     (c.phone && c.phone.includes(search))
   );
 
   return (
-    <div className="h-full flex gap-6 p-6 overflow-hidden bg-slate-900 text-slate-100">
+    <div className="h-full flex gap-6 p-6 overflow-hidden bg-slate-900 text-slate-100 relative">
       
       {/* Left: Add Form */}
       <div className="w-1/3 min-w-[320px] bg-slate-800/50 rounded-2xl border border-slate-700/50 p-6 flex flex-col shadow-2xl backdrop-blur-sm">
@@ -154,11 +171,14 @@ export default function Customers() {
                 
                 <div className="flex flex-col items-end gap-2">
                   <div className="flex items-center gap-2">
-                    <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Points Balance</div>
-                    <button onClick={() => handleDelete(customer.id)} className="text-slate-600 hover:text-red-400 p-1 rounded transition-colors"><Trash2 size={16}/></button>
+                    <button onClick={() => handleViewHistory(customer)} className="text-slate-500 hover:text-cyan-400 p-1.5 rounded transition-colors" title="View History"><History size={16}/></button>
+                    <button onClick={() => handleDelete(customer.id)} className="text-slate-600 hover:text-red-400 p-1.5 rounded transition-colors" title="Delete"><Trash2 size={16}/></button>
                   </div>
-                  <div className="bg-slate-900 px-3 py-1 rounded-full border border-slate-700 text-emerald-400 font-mono font-bold shadow-inner">
-                    {customer.points || 0}
+                  <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Points</span>
+                      <div className="bg-slate-900 px-3 py-1 rounded-full border border-slate-700 text-emerald-400 font-mono font-bold shadow-inner">
+                        {customer.points || 0}
+                      </div>
                   </div>
                 </div>
               </div>
@@ -166,6 +186,54 @@ export default function Customers() {
           )}
         </div>
       </div>
+
+      {/* History Modal */}
+      {historyModalOpen && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <div className="bg-slate-900 border border-slate-700 w-full max-w-2xl rounded-xl shadow-2xl flex flex-col max-h-[80vh] animate-in fade-in zoom-in duration-200">
+                <div className="p-5 border-b border-slate-800 flex justify-between items-center">
+                    <div>
+                        <h3 className="font-bold text-white text-lg">Purchase History</h3>
+                        <p className="text-slate-400 text-sm">{selectedCustomer?.name}</p>
+                    </div>
+                    <button onClick={() => setHistoryModalOpen(false)}><X className="text-slate-500 hover:text-white"/></button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
+                    {customerHistory.length === 0 ? <p className="text-slate-500 text-center py-10">No purchase history found.</p> :
+                     customerHistory.map(tx => (
+                         <div key={tx.id} className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col gap-3">
+                             <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="bg-cyan-900/30 text-cyan-400 px-2 py-0.5 rounded text-xs font-bold">#{tx.id}</span>
+                                    <span className="text-slate-500 text-xs">{new Date(tx.timestamp).toLocaleString()}</span>
+                                </div>
+                                <span className={`text-xs font-bold px-2 py-0.5 rounded border ${tx.payment_method === 'Split' ? 'bg-indigo-900/30 text-indigo-400 border-indigo-800' : 'bg-emerald-900/30 text-emerald-400 border-emerald-800'}`}>
+                                    {tx.payment_method}
+                                </span>
+                             </div>
+                             <div className="space-y-1">
+                                {tx.items.map((item, i) => (
+                                    <div key={i} className="flex justify-between text-sm text-slate-300">
+                                        <span className="flex items-center gap-2">
+                                            <span className="text-slate-600 font-mono text-xs">x{item.quantity}</span>
+                                            {item.name}
+                                        </span>
+                                        <span className="font-mono text-slate-500">{item.price_sell.toLocaleString()}</span>
+                                    </div>
+                                ))}
+                             </div>
+                             <div className="border-t border-slate-800 pt-2 flex justify-between font-bold text-white items-center">
+                                <span className="text-xs text-slate-500 uppercase tracking-wider">Total</span>
+                                <span className="text-lg text-cyan-400">LKR {tx.total.toLocaleString()}</span>
+                             </div>
+                         </div>
+                     ))
+                    }
+                </div>
+            </div>
+        </div>
+      )}
+
     </div>
   );
 }
