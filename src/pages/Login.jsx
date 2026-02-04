@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Lock, User, ArrowRight, ShieldCheck } from 'lucide-react';
+import CopyrightFooter from '../components/CopyrightFooter';
 import { motion } from 'framer-motion';
 
 export default function Login() {
@@ -14,7 +15,7 @@ export default function Login() {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-    
+
     // Simulate network delay for UX
     await new Promise(r => setTimeout(r, 500));
 
@@ -31,7 +32,7 @@ export default function Login() {
       <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-cyan-500/20 rounded-full blur-[120px]"></div>
       <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-indigo-500/20 rounded-full blur-[120px]"></div>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
         className="bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 p-10 rounded-3xl w-full max-w-md shadow-2xl z-10"
       >
@@ -48,8 +49,8 @@ export default function Login() {
             <label className="text-xs uppercase font-bold text-slate-500 ml-1">Username</label>
             <div className="relative">
               <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={username} onChange={e => setUsername(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition-all"
                 placeholder="Enter ID"
@@ -62,8 +63,8 @@ export default function Login() {
             <label className="text-xs uppercase font-bold text-slate-500 ml-1">Password</label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-              <input 
-                type="password" 
+              <input
+                type="password"
                 value={password} onChange={e => setPassword(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition-all"
                 placeholder="••••••••"
@@ -77,12 +78,12 @@ export default function Login() {
             </motion.div>
           )}
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={isLoading}
             className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-cyan-900/20 transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"/> : <>Login System <ArrowRight size={18} /></>}
+            {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>Login System <ArrowRight size={18} /></>}
           </button>
         </form>
 
@@ -91,6 +92,8 @@ export default function Login() {
           <p className="mt-1 opacity-50">v2.5.0 Final</p>
         </div>
       </motion.div>
+
+      <CopyrightFooter className="absolute bottom-0 left-0" />
     </div>
   );
 }

@@ -2,6 +2,8 @@
   "name": "gamers-edge-pos",
   "private": true,
   "version": "1.0.0",
+  "description": "GamersEdge POS System",
+  "author": "Mathisha Angirasa",
   "main": "electron/main.js",
   "type": "module",
   "scripts": {

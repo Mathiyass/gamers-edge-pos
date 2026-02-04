@@ -1,16 +1,50 @@
-# React + Vite
+# GamersEdge POS System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+GamersEdge POS is a modern Point of Sale system built with Electron, React, and SQLite, designed for high performance and a premium user experience.
 
-Currently, two official plugins are available:
+## 🚀 Technologies
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Frontend:** React, Vite, TailwindCSS (v4), Framer Motion
+- **Backend/Shell:** Electron
+- **Database:** SQLite (via `better-sqlite3`)
+- **Icons:** Lucide React
 
-## React Compiler
+## 🛠️ Installation
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1.  **Clone the repository**
+2.  **Install dependencies**:
+    ```bash
+    npm install
+    ```
+    > **Note:** This project uses `better-sqlite3`. If you encounter native module errors, you may need to rebuild for your Electron version:
+    > `npm run postinstall` usually handles this, but if not: `npx electron-builder install-app-deps`
 
-## Expanding the ESLint configuration
+## 💻 Development
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+To run the application in development mode (with Hot Module Replacement):
+
+```bash
+npm run electron:dev
+```
+
+This command runs Vite for the frontend and launches the Electron shell concurrently.
+
+## 📦 Building for Production
+
+To create a distributable installer (Windows NSIS):
+
+```bash
+npm run electron:build
+```
+
+The output executables will be located in the `release/` directory.
+
+## 🧹 Linting
+
+```bash
+npm run lint
+```
+
+## License
+
+Private software. All rights reserved.
