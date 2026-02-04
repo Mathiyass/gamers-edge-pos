@@ -76,8 +76,9 @@ export default function Settings() {
 
       if (res.success) {
         showMsg('Database restored successfully! System reloading...', 'success');
+        setTimeout(() => window.location.reload(), 2000);
       } else {
-        showMsg('Restore cancelled', 'neutral');
+        showMsg(res.message || 'Restore cancelled', 'neutral');
       }
     } catch (e) {
       console.error(e);

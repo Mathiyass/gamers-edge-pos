@@ -34,3 +34,5 @@ build_error.log
 
 # Release
 release/
+
+*_log.txt

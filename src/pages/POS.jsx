@@ -72,7 +72,6 @@ export default function POS() {
   useEffect(() => {
     if (printData) {
       playSound('success');
-      console.log(`[POS] Printing Invoice #${printData.id}`);
       const timer = setTimeout(() => window.print(), 500);
       return () => clearTimeout(timer);
     }
@@ -245,8 +244,8 @@ export default function POS() {
                 key={c}
                 onClick={() => setSelectedCategory(c)}
                 className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all border ${selectedCategory === c
-                    ? 'bg-cyan-500 text-white border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-                    : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? 'bg-cyan-500 text-white border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
+                  : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-800'
                   }`}
               >
                 {c}
@@ -472,8 +471,8 @@ export default function POS() {
                           type="button"
                           onClick={() => setPaymentMethod('Cash')}
                           className={`py-4 rounded-xl font-bold transition-all relative overflow-hidden ${paymentMethod === 'Cash'
-                              ? 'bg-gradient-to-br from-cyan-600 to-cyan-700 text-white shadow-lg ring-2 ring-cyan-500 ring-offset-2 ring-offset-slate-900'
-                              : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700'
+                            ? 'bg-gradient-to-br from-cyan-600 to-cyan-700 text-white shadow-lg ring-2 ring-cyan-500 ring-offset-2 ring-offset-slate-900'
+                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700'
                             }`}
                         >
                           Cash
@@ -482,8 +481,8 @@ export default function POS() {
                           type="button"
                           onClick={() => setPaymentMethod('Card')}
                           className={`py-4 rounded-xl font-bold transition-all relative overflow-hidden ${paymentMethod === 'Card'
-                              ? 'bg-gradient-to-br from-cyan-600 to-cyan-700 text-white shadow-lg ring-2 ring-cyan-500 ring-offset-2 ring-offset-slate-900'
-                              : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700'
+                            ? 'bg-gradient-to-br from-cyan-600 to-cyan-700 text-white shadow-lg ring-2 ring-cyan-500 ring-offset-2 ring-offset-slate-900'
+                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700'
                             }`}
                         >
                           Card

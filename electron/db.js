@@ -132,7 +132,7 @@ export function initDb() {
 export function loginUser(username, password) {
   console.log(`[DB] Attempting login for: '${username}'`);
   const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
-  
+
   if (!user) {
     console.log(`[DB] User '${username}' not found.`);
     throw new Error('User not found');
@@ -158,7 +158,7 @@ export function addUser(userData) {
 
 export function updateUser(userData) {
   const { id, name, username, role, password } = userData;
-  
+
   if (password) {
     const { hash, salt } = hashPassword(password);
     return db.prepare('UPDATE users SET name = ?, username = ?, role = ?, password = ?, salt = ? WHERE id = ?')
@@ -197,7 +197,7 @@ export function updateSettings(settingsObj) {
 // --- Analytics ---
 export function getDashboardStats() {
   const today = new Date().toISOString().split('T')[0];
-  
+
   const revenueObj = db.prepare('SELECT SUM(total) as val FROM transactions WHERE timestamp LIKE ?').get(`${today}%`);
   const profitObj = db.prepare('SELECT SUM(profit) as val FROM transactions').get();
   const ordersObj = db.prepare('SELECT COUNT(*) as val FROM transactions WHERE timestamp LIKE ?').get(`${today}%`);
@@ -218,7 +218,7 @@ export function getRecentActivity() {
 export function getTopSellingProducts() {
   const txs = db.prepare('SELECT items_json FROM transactions ORDER BY timestamp DESC LIMIT 100').all();
   const map = {};
-  
+
   txs.forEach(tx => {
     const items = JSON.parse(tx.items_json || '[]');
     items.forEach(item => {
@@ -351,7 +351,7 @@ export function importProductsFromCSV(filePath) {
         if (!name) continue;
 
         if (!sku) {
-           sku = `IMP-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+          sku = `IMP-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         }
 
         try {
@@ -378,7 +378,7 @@ export function createTransaction(data) {
   const itemsJson = JSON.stringify(items);
   let profit = 0;
   items.forEach(item => { profit += (item.price_sell - item.price_buy) * item.quantity; });
-  
+
   // Profit = (Sell - Buy) - Discount - Tax (Tax is passed through, not profit)
   // Actually, usually Profit = Net Sales - COGS.
   // Net Sales = Total - Tax.
@@ -395,8 +395,8 @@ export function createTransaction(data) {
   // Try to find customer ID if not provided but name is
   let finalCustomerId = customerId;
   if (!finalCustomerId && customer) {
-     const c = db.prepare('SELECT id FROM customers WHERE name = ?').get(customer);
-     if (c) finalCustomerId = c.id;
+    const c = db.prepare('SELECT id FROM customers WHERE name = ?').get(customer);
+    if (c) finalCustomerId = c.id;
   }
 
   const performTx = db.transaction(() => {
@@ -407,15 +407,15 @@ export function createTransaction(data) {
       INSERT INTO transactions (timestamp, total, profit, customer_name, items_json, payment_method, discount, payment_details, customer_id, tax)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    
+
     if (customer && customer !== 'Walk-in') {
-       if (pointsUsed > 0) {
-         db.prepare('UPDATE customers SET points = points - ? WHERE name = ?').run(pointsUsed, customer);
-       }
-       const pointsEarned = Math.floor(total / 100); 
-       db.prepare('UPDATE customers SET points = points + ? WHERE name = ?').run(pointsEarned, customer);
+      if (pointsUsed > 0) {
+        db.prepare('UPDATE customers SET points = points - ? WHERE name = ?').run(pointsUsed, customer);
+      }
+      const pointsEarned = Math.floor(total / 100);
+      db.prepare('UPDATE customers SET points = points + ? WHERE name = ?').run(pointsEarned, customer);
     }
-    
+
     return insert.run(
       timestamp,
       total,
@@ -444,19 +444,19 @@ export function getTransactions() {
 export function getCustomerHistory(customerId) {
   // If we have IDs, use them. Fallback to name match for legacy data
   if (typeof customerId === 'number') {
-     const txs = db.prepare('SELECT * FROM transactions WHERE customer_id = ? ORDER BY timestamp DESC').all(customerId);
-     if (txs.length > 0) {
-        return txs.map(tx => ({ ...tx, items: JSON.parse(tx.items_json || '[]') }));
-     }
+    const txs = db.prepare('SELECT * FROM transactions WHERE customer_id = ? ORDER BY timestamp DESC').all(customerId);
+    if (txs.length > 0) {
+      return txs.map(tx => ({ ...tx, items: JSON.parse(tx.items_json || '[]') }));
+    }
   }
 
   // Fallback: try to find customer name from ID and search by name (handling legacy data)
   if (typeof customerId === 'number') {
-     const c = db.prepare('SELECT name FROM customers WHERE id = ?').get(customerId);
-     if (c) {
-        const txs = db.prepare('SELECT * FROM transactions WHERE customer_name = ? ORDER BY timestamp DESC').all(c.name);
-        return txs.map(tx => ({ ...tx, items: JSON.parse(tx.items_json || '[]') }));
-     }
+    const c = db.prepare('SELECT name FROM customers WHERE id = ?').get(customerId);
+    if (c) {
+      const txs = db.prepare('SELECT * FROM transactions WHERE customer_name = ? ORDER BY timestamp DESC').all(c.name);
+      return txs.map(tx => ({ ...tx, items: JSON.parse(tx.items_json || '[]') }));
+    }
   }
 
   return [];
@@ -464,24 +464,24 @@ export function getCustomerHistory(customerId) {
 
 export function updateTransaction(data) {
   const { id, newDate, newCustomer, newTotal, newItems } = data;
-  
+
   const performUpdate = db.transaction(() => {
     const oldTx = db.prepare('SELECT items_json FROM transactions WHERE id = ?').get(id);
     if (!oldTx) throw new Error('Transaction not found');
     const oldItems = JSON.parse(oldTx.items_json || '[]');
-    
+
     const restoreStock = db.prepare('UPDATE products SET stock = stock + ? WHERE id = ?');
     for (const item of oldItems) {
-        restoreStock.run(item.quantity, item.id);
+      restoreStock.run(item.quantity, item.id);
     }
 
     const deductStock = db.prepare('UPDATE products SET stock = stock - ? WHERE id = ?');
     let newProfit = 0;
-    
+
     for (const item of newItems) {
-        deductStock.run(item.quantity, item.id);
-        const cost = item.price_buy || 0; 
-        newProfit += (item.price_sell - cost) * item.quantity;
+      deductStock.run(item.quantity, item.id);
+      const cost = item.price_buy || 0;
+      newProfit += (item.price_sell - cost) * item.quantity;
     }
 
     const newItemsJson = JSON.stringify(newItems);
@@ -538,7 +538,7 @@ export function getRepairs() {
 export function addRepair(repair) {
   const { customer_id, device, issue, cost } = repair;
   const created_at = new Date().toISOString();
-  
+
   const columns = db.prepare('PRAGMA table_info(repairs)').all().map(c => c.name);
   const hasDateIn = columns.includes('date_in');
 
@@ -588,27 +588,58 @@ export function factoryReset() {
 export function restoreDatabase(backupPath) {
   try {
     db.prepare(`ATTACH DATABASE ? AS backup`).run(backupPath);
-    
+
+    // Get list of tables in main DB (exclude sqlite internal)
+    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'").all();
+
     const restore = db.transaction(() => {
-      db.prepare('DELETE FROM main.products').run();
-      db.prepare('DELETE FROM main.customers').run();
-      db.prepare('DELETE FROM main.transactions').run();
-      db.prepare('DELETE FROM main.repairs').run();
-      db.prepare('DELETE FROM main.settings').run();
-      db.prepare('DELETE FROM main.sqlite_sequence').run();
+      // 1. Clear existing data
+      tables.forEach(t => {
+        try {
+          db.prepare(`DELETE FROM main.${t.name}`).run();
+        } catch (e) { console.error(`Failed to clear table ${t.name}`, e); }
+      });
 
-      db.prepare('INSERT INTO main.products SELECT * FROM backup.products').run();
-      db.prepare('INSERT INTO main.customers SELECT * FROM backup.customers').run();
-      db.prepare('INSERT INTO main.transactions SELECT * FROM backup.transactions').run();
-      db.prepare('INSERT INTO main.repairs SELECT * FROM backup.repairs').run();
-      
-      try {
-         db.prepare('INSERT INTO main.settings SELECT * FROM backup.settings').run();
-      } catch (e) { console.log("No settings in backup"); }
+      // 2. Restore data with column matching
+      tables.forEach(t => {
+        const tableName = t.name;
 
+        // Check if table exists in backup
+        const backupTableExists = db.prepare(`SELECT name FROM backup.sqlite_master WHERE type='table' AND name = ?`).get(tableName);
+
+        if (backupTableExists) {
+          // Get columns for main table
+          const mainCols = db.prepare(`PRAGMA main.table_info(${tableName})`).all().map(c => c.name);
+          // Get columns for backup table
+          const backupCols = db.prepare(`PRAGMA backup.table_info(${tableName})`).all().map(c => c.name);
+
+          // Intersect columns
+          const commonCols = mainCols.filter(c => backupCols.includes(c));
+
+          if (commonCols.length > 0) {
+            const colStr = commonCols.join(', ');
+            try {
+              console.log(`Restoring table [${tableName}]. Columns: ${colStr}`);
+              db.prepare(`INSERT INTO main.${tableName} (${colStr}) SELECT ${colStr} FROM backup.${tableName}`).run();
+            } catch (e) {
+              console.error(`Failed to restore table ${tableName}:`, e.message);
+              throw e; // Critical error, abort transaction
+            }
+          } else {
+            console.warn(`No common columns for table ${tableName}, skipping data.`);
+          }
+        } else {
+          console.warn(`Table ${tableName} missing in backup, skipping.`);
+        }
+      });
+
+      // 3. Restore sequence for autoincrement
       const hasSequence = db.prepare("SELECT name FROM backup.sqlite_master WHERE type='table' AND name='sqlite_sequence'").get();
       if (hasSequence) {
-         db.prepare('INSERT INTO main.sqlite_sequence SELECT * FROM backup.sqlite_sequence').run();
+        try {
+          db.prepare('DELETE FROM main.sqlite_sequence').run();
+          db.prepare('INSERT INTO main.sqlite_sequence SELECT * FROM backup.sqlite_sequence').run();
+        } catch (e) { console.warn("Failed to restore sqlite_sequence", e); }
       }
     });
 
@@ -616,7 +647,8 @@ export function restoreDatabase(backupPath) {
     db.prepare('DETACH DATABASE backup').run();
     return { success: true };
   } catch (err) {
-    try { db.prepare('DETACH DATABASE backup').run(); } catch (e) {}
+    console.error("Restore Error:", err);
+    try { db.prepare('DETACH DATABASE backup').run(); } catch (e) { }
     throw err;
   }
 }
