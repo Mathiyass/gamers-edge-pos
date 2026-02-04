@@ -8,10 +8,10 @@ export default function InvoiceEditor({ invoice, onClose, onSave, allProducts })
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    if (invoice && (!editedInvoice || editedInvoice.id !== invoice.id)) {
+    if (invoice) {
       setEditedInvoice(JSON.parse(JSON.stringify(invoice)));
     }
-  }, [invoice, editedInvoice]);
+  }, [invoice]);
 
   if (!editedInvoice) return null;
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Package, Plus, Search, Trash2, Save, X, Image as ImageIcon, Edit, Filter, TrendingUp, AlertTriangle, Download, UploadCloud } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
@@ -27,7 +27,7 @@ export default function Stock() {
 
   const [formData, setFormData] = useState(initialFormState);
 
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
     if (!window.api) return;
     try {
       const res = await window.api.getProducts();
@@ -35,11 +35,11 @@ export default function Stock() {
     } catch (err) {
       console.error("Failed to load products", err);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadProducts();
-  }, []);
+  }, [loadProducts]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -141,7 +141,7 @@ export default function Stock() {
     try {
       await window.api.deleteProduct(id);
       loadProducts();
-    } catch (err) {
+    } catch {
       alert("Failed to delete product");
     }
   };

@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { UserPlus, Trash2, Edit, Shield, User } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Users() {
   const [users, setUsers] = useState([]);
@@ -8,18 +7,18 @@ export default function Users() {
   const [formData, setFormData] = useState({ name: '', username: '', password: '', role: 'staff' });
   const [editingId, setEditingId] = useState(null);
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       const data = await window.api.getUsers();
       setUsers(data);
     } catch (e) {
       console.error(e);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadUsers();
-  }, []);
+  }, [loadUsers]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

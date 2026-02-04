@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, ChevronRight, Wrench, Clock, CheckCircle, AlertCircle, Printer, Trash2 } from 'lucide-react';
 import RepairTicket from '../components/RepairTicket';
 
@@ -15,11 +15,7 @@ export default function Repairs() {
   const [newTicket, setNewTicket] = useState({ customer_id: '', device: '', issue: '', cost: '' });
   const [printData, setPrintData] = useState(null);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const [r, c] = await Promise.all([
         window.api.getRepairs(),
@@ -30,7 +26,11 @@ export default function Repairs() {
     } catch (e) {
       console.error(e);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const moveStatus = async (id, currentStatus) => {
     const nextMap = { 'Pending': 'In_Progress', 'In_Progress': 'Done', 'Done': 'Pending' };
@@ -83,7 +83,6 @@ export default function Repairs() {
         {COLUMNS.map(col => {
           const Icon = col.icon;
           const items = repairs.filter(r => r.status === col.id);
-          const borderColor = `border-${col.color}-500`;
           const textColor = `text-${col.color}-400`;
           const bgColor = `bg-${col.color}-500/10`;
 

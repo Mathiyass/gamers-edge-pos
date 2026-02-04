@@ -3,6 +3,27 @@ import { DollarSign, TrendingUp, ShoppingBag, AlertTriangle, Activity } from 'lu
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 
+  const COLORS = ['#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1'];
+
+const StatCard = ({ title, value, icon: Icon, color, subtext, onClick }) => (
+  <div 
+    onClick={onClick}
+    className={`bg-slate-900/50 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden group transition-transform ${onClick ? 'cursor-pointer hover:scale-105 hover:border-slate-700' : ''}`}
+  >
+    <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full ${color} opacity-10 group-hover:opacity-20 transition-opacity blur-2xl`}></div>
+    <div className="flex justify-between items-start mb-4 relative z-10">
+      <div>
+        <p className="text-slate-400 text-sm font-medium uppercase tracking-wider">{title}</p>
+        <h3 className="text-3xl font-bold text-white mt-1">{value}</h3>
+      </div>
+      <div className={`p-3 rounded-xl ${color} bg-opacity-20 text-white`}>
+        <Icon size={24} />
+      </div>
+    </div>
+    {subtext && <p className="text-xs text-slate-500 relative z-10">{subtext}</p>}
+  </div>
+);
+
 export default function Dashboard() {
   const [stats, setStats] = useState({ totalRevenue: 0, netProfit: 0, totalOrders: 0, lowStockCount: 0 });
   const [activity, setActivity] = useState([]);
@@ -48,25 +69,6 @@ export default function Dashboard() {
 
     fetchData();
   }, []);
-
-  const StatCard = ({ title, value, icon: Icon, color, subtext, onClick }) => (
-    <div 
-      onClick={onClick}
-      className={`bg-slate-900/50 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden group transition-transform ${onClick ? 'cursor-pointer hover:scale-105 hover:border-slate-700' : ''}`}
-    >
-      <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full ${color} opacity-10 group-hover:opacity-20 transition-opacity blur-2xl`}></div>
-      <div className="flex justify-between items-start mb-4 relative z-10">
-        <div>
-          <p className="text-slate-400 text-sm font-medium uppercase tracking-wider">{title}</p>
-          <h3 className="text-3xl font-bold text-white mt-1">{value}</h3>
-        </div>
-        <div className={`p-3 rounded-xl ${color} bg-opacity-20 text-white`}>
-          <Icon size={24} />
-        </div>
-      </div>
-      {subtext && <p className="text-xs text-slate-500 relative z-10">{subtext}</p>}
-    </div>
-  );
 
   return (
     <div className="p-8 h-full overflow-y-auto bg-slate-950 custom-scrollbar">

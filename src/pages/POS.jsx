@@ -32,6 +32,15 @@ export default function POS() {
   // Refs
   const searchInputRef = useRef(null);
 
+  // --- Totals ---
+  const subtotal = cart.reduce((sum, item) => sum + (item.price_sell * item.quantity), 0);
+  const maxPointsRedeemable = Math.min(customerPoints, subtotal - discount);
+  const pointsDiscount = usePoints ? maxPointsRedeemable : 0;
+
+  const taxableAmount = Math.max(0, subtotal - discount - pointsDiscount);
+  const taxAmount = taxableAmount * (taxRate / 100);
+  const total = taxableAmount + taxAmount;
+
   // --- Keyboard Shortcuts & Scanner Logic ---
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -41,6 +50,7 @@ export default function POS() {
       }
       if (e.key === 'F12' && cart.length > 0 && !isCheckoutOpen) {
         e.preventDefault();
+        setSplitAmounts({ cash: total, card: 0 });
         setIsCheckoutOpen(true);
       }
       if (e.key === 'Escape') {
@@ -52,7 +62,7 @@ export default function POS() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [cart, isCheckoutOpen, isDiscountModalOpen, isRecallModalOpen]);
+  }, [cart, isCheckoutOpen, isDiscountModalOpen, isRecallModalOpen, total]);
 
   // --- Print Trigger ---
   useEffect(() => {
@@ -86,7 +96,7 @@ export default function POS() {
         }, 500);
         return () => clearTimeout(timer);
     } else {
-        setCustomerPoints(0);
+        if (customerPoints !== 0) setCustomerPoints(0);
     }
   }, [customer]);
 
@@ -120,21 +130,7 @@ export default function POS() {
 
   const removeFromCart = (id) => setCart(prev => prev.filter(item => item.id !== id));
 
-  // --- Totals ---
-  const subtotal = cart.reduce((sum, item) => sum + (item.price_sell * item.quantity), 0);
-  const maxPointsRedeemable = Math.min(customerPoints, subtotal - discount);
-  const pointsDiscount = usePoints ? maxPointsRedeemable : 0;
 
-  const taxableAmount = Math.max(0, subtotal - discount - pointsDiscount);
-  const taxAmount = taxableAmount * (taxRate / 100);
-  const total = taxableAmount + taxAmount;
-
-  // Initialize Split Amount when checkout opens
-  useEffect(() => {
-    if (isCheckoutOpen) {
-       setSplitAmounts({ cash: total, card: 0 });
-    }
-  }, [isCheckoutOpen, total]);
 
   const handleCheckout = async (e) => {
     e.preventDefault();
@@ -367,7 +363,10 @@ export default function POS() {
           </div>
 
           <button 
-            onClick={() => setIsCheckoutOpen(true)}
+            onClick={() => {
+              setSplitAmounts({ cash: total, card: 0 });
+              setIsCheckoutOpen(true);
+            }}
             disabled={cart.length === 0}
             className="w-full bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold py-3.5 rounded-xl shadow-[0_0_20px_rgba(8,145,178,0.3)] hover:shadow-[0_0_30px_rgba(8,145,178,0.5)] transition-all flex justify-center items-center gap-2"
           >
