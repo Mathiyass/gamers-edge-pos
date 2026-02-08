@@ -273,8 +273,11 @@ export default function POS() {
                       <Package size={32} strokeWidth={1.5} />
                     </div>
                   )}
-                  <span className={`absolute top-2 right-2 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border shadow-sm backdrop-blur-md ${product.stock < 5 ? 'bg-red-500/20 text-red-200 border-red-500/30' : 'bg-slate-900/60 text-emerald-400 border-emerald-500/30'}`}>
-                    {product.stock} Left
+                  <span className={`absolute top-2 right-2 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border shadow-sm backdrop-blur-md ${product.stock === 0
+                    ? 'bg-red-500/20 text-red-300 border-red-500/40'
+                    : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                    }`}>
+                    {product.stock === 0 ? 'Out of Stock' : `${product.stock} Left`}
                   </span>
                 </div>
                 <div className="p-4 flex flex-col flex-1">
@@ -296,7 +299,12 @@ export default function POS() {
       </div>
 
       {/* RIGHT: Cart */}
-      <Card className="w-[420px] flex flex-col shadow-2xl p-0 overflow-hidden border-slate-800 bg-slate-900/80 backdrop-blur-xl h-full">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="w-[420px] flex flex-col shadow-2xl p-0 overflow-hidden border border-slate-800 bg-slate-900/80 backdrop-blur-xl h-full rounded-2xl"
+      >
         <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
           <h2 className="text-lg font-bold text-white flex items-center gap-2 neon-text">
             <ShoppingCart className="text-cyan-400" /> Current Sale
@@ -307,7 +315,7 @@ export default function POS() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-3 bg-slate-950/30">
+        <div className="flex-1 min-h-0 overflow-y-auto p-4 custom-scrollbar space-y-3 bg-slate-950/30">
           <AnimatePresence mode="popLayout">
             {cart.length === 0 && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center h-full text-slate-600 gap-4">
@@ -351,7 +359,7 @@ export default function POS() {
           </AnimatePresence>
         </div>
 
-        <div className="p-5 bg-slate-900/80 border-t border-slate-800 space-y-3 backdrop-blur-md">
+        <div className="shrink-0 p-5 bg-slate-900/80 border-t border-slate-800 space-y-3 backdrop-blur-md">
           <div className="space-y-2 pb-4 border-b border-slate-800/50">
             <div className="flex justify-between text-slate-400 text-sm">
               <span>Subtotal</span>
@@ -403,7 +411,7 @@ export default function POS() {
             <CreditCard size={20} className="mr-2" /> Checkout (F12)
           </Button>
         </div>
-      </Card>
+      </motion.div>
 
       {/* Checkout Modal */}
       <AnimatePresence>

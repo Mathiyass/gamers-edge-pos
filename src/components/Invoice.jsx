@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
+import logoImage from '/logo.webp';
 
 const Invoice = ({ data, onClose }) => {
   const [storeSettings, setStoreSettings] = useState({
@@ -30,7 +31,7 @@ const Invoice = ({ data, onClose }) => {
   return (
     <div id="invoice-content" className="font-sans w-full h-full bg-white text-slate-900 absolute top-0 left-0 z-50 p-12">
       {/* Close Button (Hidden on Print) */}
-      <button 
+      <button
         onClick={onClose}
         className="absolute top-5 right-5 p-2 bg-red-600 text-white rounded-full hover:bg-red-700 shadow-lg print:hidden"
         aria-label="Close Invoice"
@@ -41,29 +42,32 @@ const Invoice = ({ data, onClose }) => {
       {/* Header Section */}
       <div className="flex justify-between items-start mb-12">
         <div className="w-1/2">
-           <h1 className="text-5xl font-extrabold text-cyan-600 tracking-tight uppercase mb-2">{storeSettings.storeName}</h1>
-           <div className="text-sm font-medium text-slate-500 leading-relaxed whitespace-pre-wrap">
-             <p>{storeSettings.address}</p>
-             <p className="mt-2 text-slate-800 font-bold">{storeSettings.phone}</p>
-             <p className="text-cyan-700 underline decoration-cyan-300">{storeSettings.email}</p>
-           </div>
+          <div className="flex items-center gap-4 mb-4">
+            <img src={logoImage} alt="GamersEdge" className="h-20 w-auto object-contain" />
+          </div>
+          <h1 className="text-4xl font-extrabold text-cyan-600 tracking-tight uppercase mb-2">{storeSettings.storeName}</h1>
+          <div className="text-sm font-medium text-slate-500 leading-relaxed whitespace-pre-wrap">
+            <p>{storeSettings.address}</p>
+            <p className="mt-2 text-slate-800 font-bold">{storeSettings.phone}</p>
+            <p className="text-cyan-700 underline decoration-cyan-300">{storeSettings.email}</p>
+          </div>
         </div>
         <div className="text-right w-1/3">
-           <h2 className="text-4xl font-black text-slate-200 uppercase tracking-widest mb-4">Invoice</h2>
-           <div className="space-y-1 text-sm">
-             <div className="flex justify-between border-b border-slate-100 pb-1">
-               <span className="font-bold text-slate-500">Invoice No:</span>
-               <span className="font-mono font-bold text-slate-900">#{data.id}</span>
-             </div>
-             <div className="flex justify-between border-b border-slate-100 pb-1 pt-1">
-               <span className="font-bold text-slate-500">Date:</span>
-               <span className="font-mono text-slate-900">{new Date(data.date).toLocaleDateString()}</span>
-             </div>
-              <div className="flex justify-between border-b border-slate-100 pb-1 pt-1">
-               <span className="font-bold text-slate-500">Time:</span>
-               <span className="font-mono text-slate-900">{new Date(data.date).toLocaleTimeString()}</span>
-             </div>
-           </div>
+          <h2 className="text-4xl font-black text-slate-200 uppercase tracking-widest mb-4">Invoice</h2>
+          <div className="space-y-1 text-sm">
+            <div className="flex justify-between border-b border-slate-100 pb-1">
+              <span className="font-bold text-slate-500">Invoice No:</span>
+              <span className="font-mono font-bold text-slate-900">#{data.id}</span>
+            </div>
+            <div className="flex justify-between border-b border-slate-100 pb-1 pt-1">
+              <span className="font-bold text-slate-500">Date:</span>
+              <span className="font-mono text-slate-900">{new Date(data.date).toLocaleDateString()}</span>
+            </div>
+            <div className="flex justify-between border-b border-slate-100 pb-1 pt-1">
+              <span className="font-bold text-slate-500">Time:</span>
+              <span className="font-mono text-slate-900">{new Date(data.date).toLocaleTimeString()}</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -74,24 +78,23 @@ const Invoice = ({ data, onClose }) => {
           <p className="font-bold text-lg text-slate-900">{data.customer || 'Walk-in Customer'}</p>
         </div>
         <div className="text-right">
-           <h3 className="text-xs font-bold uppercase text-slate-400 mb-1 tracking-wider">Payment Method</h3>
-           <div className="flex flex-col items-end">
-             <span className={`inline-block px-3 py-1 rounded text-xs font-bold uppercase tracking-wide border ${
-               data.paymentMethod === 'Card'
-               ? 'bg-purple-100 text-purple-700 border-purple-200'
-               : data.paymentMethod === 'Split'
-               ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
-               : 'bg-emerald-100 text-emerald-700 border-emerald-200'
-             }`}>
-               {data.paymentMethod || 'Cash'}
-             </span>
-             {data.paymentDetails && (
-               <div className="text-xs text-slate-500 mt-1 font-mono">
-                 {data.paymentDetails.cash > 0 && <span>Cash: {data.paymentDetails.cash.toLocaleString()} </span>}
-                 {data.paymentDetails.card > 0 && <span>Card: {data.paymentDetails.card.toLocaleString()}</span>}
-               </div>
-             )}
-           </div>
+          <h3 className="text-xs font-bold uppercase text-slate-400 mb-1 tracking-wider">Payment Method</h3>
+          <div className="flex flex-col items-end">
+            <span className={`inline-block px-3 py-1 rounded text-xs font-bold uppercase tracking-wide border ${data.paymentMethod === 'Card'
+              ? 'bg-purple-100 text-purple-700 border-purple-200'
+              : data.paymentMethod === 'Split'
+                ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
+                : 'bg-emerald-100 text-emerald-700 border-emerald-200'
+              }`}>
+              {data.paymentMethod || 'Cash'}
+            </span>
+            {data.paymentDetails && (
+              <div className="text-xs text-slate-500 mt-1 font-mono">
+                {data.paymentDetails.cash > 0 && <span>Cash: {data.paymentDetails.cash.toLocaleString()} </span>}
+                {data.paymentDetails.card > 0 && <span>Card: {data.paymentDetails.card.toLocaleString()}</span>}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -123,29 +126,29 @@ const Invoice = ({ data, onClose }) => {
       <div className="flex justify-end">
         <div className="w-1/2 lg:w-1/3">
           <div className="space-y-3">
-             <div className="flex justify-between text-slate-500 font-medium">
-                <span>Subtotal</span>
-                <span>{(data.total - (data.tax||0) + (data.discount||0)).toLocaleString()}</span>
-             </div>
-             {data.discount > 0 && (
-               <div className="flex justify-between text-red-500 font-medium">
-                  <span>Discount</span>
-                  <span>-{data.discount.toLocaleString()}</span>
-               </div>
-             )}
-             {data.tax > 0 && (
-               <div className="flex justify-between text-slate-500 font-medium">
-                  <span>Tax</span>
-                  <span>+{data.tax.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-               </div>
-             )}
-             <div className="flex justify-between items-center border-t-2 border-cyan-600 pt-4 mt-4">
-                <span className="text-lg font-bold text-slate-900">Grand Total</span>
-                <span className="text-3xl font-black text-cyan-600">
-                   <span className="text-sm font-bold text-slate-400 mr-1">LKR</span>
-                   {data.total.toLocaleString()}
-                </span>
-             </div>
+            <div className="flex justify-between text-slate-500 font-medium">
+              <span>Subtotal</span>
+              <span>{(data.total - (data.tax || 0) + (data.discount || 0)).toLocaleString()}</span>
+            </div>
+            {data.discount > 0 && (
+              <div className="flex justify-between text-red-500 font-medium">
+                <span>Discount</span>
+                <span>-{data.discount.toLocaleString()}</span>
+              </div>
+            )}
+            {data.tax > 0 && (
+              <div className="flex justify-between text-slate-500 font-medium">
+                <span>Tax</span>
+                <span>+{data.tax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center border-t-2 border-cyan-600 pt-4 mt-4">
+              <span className="text-lg font-bold text-slate-900">Grand Total</span>
+              <span className="text-3xl font-black text-cyan-600">
+                <span className="text-sm font-bold text-slate-400 mr-1">LKR</span>
+                {data.total.toLocaleString()}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -155,9 +158,9 @@ const Invoice = ({ data, onClose }) => {
         <p className="text-slate-900 font-bold mb-1">{storeSettings.footerText}</p>
         <p className="text-xs text-slate-400">Please retain this invoice for warranty claims. Goods once sold are not returnable.</p>
         <div className="mt-4 flex justify-center gap-2">
-           <div className="h-1 w-16 bg-cyan-500 rounded-full"></div>
-           <div className="h-1 w-4 bg-slate-200 rounded-full"></div>
-           <div className="h-1 w-4 bg-slate-200 rounded-full"></div>
+          <div className="h-1 w-16 bg-cyan-500 rounded-full"></div>
+          <div className="h-1 w-4 bg-slate-200 rounded-full"></div>
+          <div className="h-1 w-4 bg-slate-200 rounded-full"></div>
         </div>
       </div>
     </div>

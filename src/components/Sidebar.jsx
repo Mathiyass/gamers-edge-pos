@@ -7,6 +7,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { cn } from './ui/Card';
+import logoImage from '/logo.webp';
 
 export default function Sidebar({ collapsed, setCollapsed }) {
   const { user, logout } = useAuth();
@@ -49,8 +50,8 @@ export default function Sidebar({ collapsed, setCollapsed }) {
       {/* Brand */}
       <div className="h-20 flex items-center px-6 border-b border-slate-800/50">
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="bg-cyan-500/10 p-2 rounded-lg border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.3)] shrink-0">
-            <Monitor className="text-cyan-400 w-6 h-6" />
+          <div className="w-10 h-10 rounded-lg overflow-hidden border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.3)] shrink-0">
+            <img src={logoImage} alt="GamersEdge" className="w-full h-full object-cover" />
           </div>
           <AnimatePresence>
             {!collapsed && (
@@ -60,7 +61,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
                 exit={{ opacity: 0 }}
                 className="whitespace-nowrap"
               >
-                <h1 className="font-bold text-lg text-white tracking-wide">GamersEdge</h1>
+                <h1 className="font-bold text-lg text-white tracking-wide">GAMERSEDGE</h1>
                 <span className="text-[10px] uppercase tracking-widest text-cyan-500 font-bold opacity-80 block -mt-1">Enterprise OS</span>
               </motion.div>
             )}

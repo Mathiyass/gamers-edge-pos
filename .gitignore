@@ -7,9 +7,14 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+
+# Build outputs
 dist
 dist-ssr
+build
+release
 *.local
 
 # Editor directories and files
@@ -28,11 +33,13 @@ dist-ssr
 *.db-shm
 *.db-wal
 
-# Logs
+# Logs and temp files
 lint_log.json
 build_error.log
-
-# Release
-release/
-
 *_log.txt
+
+# Development scripts (not needed in repo)
+scripts/
+
+# Temporary/test images
+img/

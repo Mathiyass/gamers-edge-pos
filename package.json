@@ -55,17 +55,27 @@
   },
   "build": {
     "appId": "com.gamersedge.pos",
-    "productName": "GamersEdge Enhanced",
+    "productName": "GamersEdge POS",
+    "icon": "build/icon.ico",
     "files": [
       "dist/**/*",
       "electron/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "public",
+        "to": "public",
+        "filter": [
+          "**/*"
+        ]
+      }
     ],
     "directories": {
       "output": "release"
     },
     "win": {
-      "target": "nsis",
-      "forceCodeSigning": false
+      "target": "dir",
+      "icon": "build/icon.ico"
     }
   }
 }

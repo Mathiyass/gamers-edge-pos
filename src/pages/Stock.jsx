@@ -162,7 +162,7 @@ export default function Stock() {
     const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
 
     // Low Stock Filter
-    if (showLowStockOnly && p.stock >= 5) return false;
+    if (showLowStockOnly && p.stock > 0) return false;
 
     return matchesSearch && matchesCategory;
   });
@@ -221,8 +221,8 @@ export default function Stock() {
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-4 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wide transition-all border ${selectedCategory === cat
-                      ? 'bg-cyan-500 text-white border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-                      : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-800'
+                    ? 'bg-cyan-500 text-white border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
+                    : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-800'
                     }`}
                 >
                   {cat}
@@ -285,7 +285,7 @@ export default function Stock() {
                 {filtered.map(p => {
                   const profit = p.price_sell - p.price_buy;
                   const profitPercent = p.price_buy > 0 ? ((profit / p.price_buy) * 100).toFixed(1) : 0;
-                  const isLowStock = p.stock < 5;
+                  const isLowStock = p.stock === 0;
 
                   return (
                     <motion.tr
@@ -334,10 +334,13 @@ export default function Stock() {
 
                       {/* Stock Badge */}
                       <TableCell className="text-center">
-                        <Badge variant={isLowStock ? 'error' : 'success'} className={isLowStock ? 'animate-pulse' : ''}>
-                          {isLowStock && <AlertTriangle size={10} className="mr-1" />}
-                          {p.stock}
-                        </Badge>
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${p.stock === 0
+                          ? 'bg-red-500/15 text-red-400 border-red-500/30 animate-pulse'
+                          : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                          }`}>
+                          {p.stock === 0 && <AlertTriangle size={12} />}
+                          {p.stock === 0 ? 'Out' : p.stock}
+                        </span>
                       </TableCell>
 
                       {/* Actions */}
