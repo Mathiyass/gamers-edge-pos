@@ -43,3 +43,6 @@ scripts/
 
 # Temporary/test images
 img/
+
+# AI tool metadata
+.gemini/

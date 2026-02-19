@@ -9,7 +9,7 @@ export function cn(...inputs) {
 
 const Card = ({ children, className, hover = false, ...props }) => {
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -22,7 +22,7 @@ const Card = ({ children, className, hover = false, ...props }) => {
     >
       {/* Subtle gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
-      <div className="relative z-10">
+      <div className="relative z-10 h-full flex flex-col overflow-hidden">
         {children}
       </div>
     </motion.div>

@@ -122,19 +122,16 @@ export function initDb() {
     const { hash, salt } = hashPassword('admin123'); // Default Password
     db.prepare('INSERT INTO users (name, username, password, salt, role) VALUES (?, ?, ?, ?, ?)')
       .run('Administrator', 'admin', hash, salt, 'admin');
-    console.log("Default Admin User Created (admin / admin123)");
   } else {
-    console.log(`Database initialized. User count: ${adminExists.count}`);
+    // Database already initialized
   }
 }
 
 // --- Auth ---
 export function loginUser(username, password) {
-  console.log(`[DB] Attempting login for: '${username}'`);
   const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
 
   if (!user) {
-    console.log(`[DB] User '${username}' not found.`);
     throw new Error('User not found');
   }
 
@@ -619,7 +616,7 @@ export function restoreDatabase(backupPath) {
           if (commonCols.length > 0) {
             const colStr = commonCols.join(', ');
             try {
-              console.log(`Restoring table [${tableName}]. Columns: ${colStr}`);
+
               db.prepare(`INSERT INTO main.${tableName} (${colStr}) SELECT ${colStr} FROM backup.${tableName}`).run();
             } catch (e) {
               console.error(`Failed to restore table ${tableName}:`, e.message);

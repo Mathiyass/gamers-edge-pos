@@ -41,7 +41,6 @@
     "cross-env": "^10.1.0",
     "electron": "^40.1.0",
     "electron-builder": "^26.7.0",
-    "electron-packager": "^17.1.2",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
@@ -56,7 +55,6 @@
   "build": {
     "appId": "com.gamersedge.pos",
     "productName": "GamersEdge POS",
-    "icon": "build/icon.ico",
     "files": [
       "dist/**/*",
       "electron/**/*"
@@ -75,7 +73,7 @@
     },
     "win": {
       "target": "dir",
-      "icon": "build/icon.ico"
+      "signAndEditExecutable": false
     }
   }
 }

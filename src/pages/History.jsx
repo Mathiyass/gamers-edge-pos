@@ -69,7 +69,7 @@ export default function History() {
     );
 
     return (
-        <div className="h-full flex flex-col space-y-6">
+        <div className="h-full flex flex-col space-y-6 overflow-hidden">
 
             {/* Header */}
             <div className="flex justify-between items-center bg-slate-900/50 p-6 rounded-2xl border border-slate-800 backdrop-blur-sm">

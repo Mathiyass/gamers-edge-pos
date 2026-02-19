@@ -203,11 +203,11 @@ export default function Stock() {
             )}
             <Card className="p-3 px-5 flex flex-col items-end min-w-[140px] bg-slate-900/50 backdrop-blur-sm border-slate-700/50">
               <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Total Valuation</span>
-              <span className="text-lg font-mono font-bold text-cyan-400">LKR {(totalStockValue / 1000).toFixed(1)}k</span>
+              <span className="text-lg font-mono font-bold text-cyan-400">LKR {(totalStockValue / 1000000).toFixed(2)}M</span>
             </Card>
             <Card className="p-3 px-5 flex flex-col items-end min-w-[140px] bg-slate-900/50 backdrop-blur-sm border-slate-700/50">
               <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Proj. Profit</span>
-              <span className="text-lg font-mono font-bold text-lime-400">+ LKR {(potentialProfit / 1000).toFixed(1)}k</span>
+              <span className="text-lg font-mono font-bold text-lime-400">+ LKR {(potentialProfit / 1000000).toFixed(2)}M</span>
             </Card>
           </div>
         </div>
