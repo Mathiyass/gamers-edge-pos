@@ -29,7 +29,7 @@ const Invoice = ({ data, onClose }) => {
   if (!data) return null;
 
   return (
-    <div id="invoice-content" className="font-sans w-full h-full bg-white text-slate-900 absolute top-0 left-0 z-50 p-12">
+    <div id="invoice-content" className="font-sans w-full min-h-screen bg-white text-slate-900 absolute top-0 left-0 z-50 p-12 flex flex-col">
       {/* Close Button (Hidden on Print) */}
       <button
         onClick={onClose}
@@ -154,7 +154,7 @@ const Invoice = ({ data, onClose }) => {
       </div>
 
       {/* Bottom Footer */}
-      <div className="absolute bottom-12 left-12 right-12 text-center border-t border-slate-100 pt-6">
+      <div className="mt-auto text-center border-t border-slate-100 pt-6 pb-12">
         <p className="text-slate-900 font-bold mb-1">{storeSettings.footerText}</p>
         <p className="text-xs text-slate-400">Please retain this invoice for warranty claims. Goods once sold are not returnable.</p>
         <div className="mt-4 flex justify-center gap-2">

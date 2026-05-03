@@ -77,16 +77,18 @@ input, button, textarea { font-family: inherit; }
     visibility: visible;
   }
   #invoice-content, #repair-ticket-content {
-    position: fixed;
+    position: absolute;
     left: 0;
     top: 0;
     width: 100%;
-    height: 100%;
     margin: 0;
     padding: 20px;
     background: white !important;
     color: black !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+  tr {
+    break-inside: avoid;
   }
 }
