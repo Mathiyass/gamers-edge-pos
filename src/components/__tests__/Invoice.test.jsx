@@ -8,6 +8,10 @@ vi.mock('lucide-react', () => ({
   X: () => <span data-testid="close-icon">X</span>
 }));
 
+vi.mock('/logo.webp', () => ({
+  default: 'test-logo.webp'
+}));
+
 describe('Invoice Component', () => {
   // Setup window.api mock
   beforeAll(() => {
