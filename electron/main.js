@@ -65,8 +65,7 @@ function handleIpc(channel, handler) {
       return await handler(event, ...args);
     } catch (err) {
       console.error(`IPC Error [${channel}]:`, err);
-      // Return error object instead of crashing
-      return { error: err.message };
+      throw err;
     }
   });
 }
