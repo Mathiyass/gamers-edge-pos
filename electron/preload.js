@@ -1,4 +1,3 @@
-/* eslint-env node */
 import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('api', {

@@ -127,9 +127,19 @@ export function initDb() {
   }
 }
 
+// --- Prepared Statement Cache ---
+const stmtCache = new Map();
+
+function getStmt(sql) {
+  if (!stmtCache.has(sql)) {
+    stmtCache.set(sql, db.prepare(sql));
+  }
+  return stmtCache.get(sql);
+}
+
 // --- Auth ---
 export function loginUser(username, password) {
-  const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+  const user = getStmt('SELECT * FROM users WHERE username = ?').get(username);
 
   if (!user) {
     throw new Error('User not found');
@@ -143,13 +153,13 @@ export function loginUser(username, password) {
 }
 
 export function getUsers() {
-  return db.prepare('SELECT id, name, username, role FROM users ORDER BY name ASC').all();
+  return getStmt('SELECT id, name, username, role FROM users ORDER BY name ASC').all();
 }
 
 export function addUser(userData) {
   const { name, username, password, role } = userData;
   const { hash, salt } = hashPassword(password);
-  return db.prepare('INSERT INTO users (name, username, password, salt, role) VALUES (?, ?, ?, ?, ?)')
+  return getStmt('INSERT INTO users (name, username, password, salt, role) VALUES (?, ?, ?, ?, ?)')
     .run(name, username, hash, salt, role || 'staff');
 }
 
@@ -158,21 +168,21 @@ export function updateUser(userData) {
 
   if (password) {
     const { hash, salt } = hashPassword(password);
-    return db.prepare('UPDATE users SET name = ?, username = ?, role = ?, password = ?, salt = ? WHERE id = ?')
+    return getStmt('UPDATE users SET name = ?, username = ?, role = ?, password = ?, salt = ? WHERE id = ?')
       .run(name, username, role, hash, salt, id);
   } else {
-    return db.prepare('UPDATE users SET name = ?, username = ?, role = ? WHERE id = ?')
+    return getStmt('UPDATE users SET name = ?, username = ?, role = ? WHERE id = ?')
       .run(name, username, role, id);
   }
 }
 
 export function deleteUser(id) {
-  return db.prepare('DELETE FROM users WHERE id = ?').run(id);
+  return getStmt('DELETE FROM users WHERE id = ?').run(id);
 }
 
 // --- Settings ---
 export function getSettings() {
-  const rows = db.prepare('SELECT * FROM settings').all();
+  const rows = getStmt('SELECT * FROM settings').all();
   const settings = {};
   rows.forEach(row => {
     settings[row.key] = row.value;
@@ -181,7 +191,7 @@ export function getSettings() {
 }
 
 export function updateSettings(settingsObj) {
-  const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
+  const stmt = getStmt('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
   const update = db.transaction(() => {
     for (const [key, value] of Object.entries(settingsObj)) {
       stmt.run(key, value);
@@ -195,10 +205,10 @@ export function updateSettings(settingsObj) {
 export function getDashboardStats() {
   const today = new Date().toISOString().split('T')[0];
 
-  const revenueObj = db.prepare('SELECT SUM(total) as val FROM transactions WHERE timestamp LIKE ?').get(`${today}%`);
-  const profitObj = db.prepare('SELECT SUM(profit) as val FROM transactions').get();
-  const ordersObj = db.prepare('SELECT COUNT(*) as val FROM transactions WHERE timestamp LIKE ?').get(`${today}%`);
-  const lowStockObj = db.prepare('SELECT COUNT(*) as val FROM products WHERE stock < 5').get();
+  const revenueObj = getStmt('SELECT SUM(total) as val FROM transactions WHERE timestamp LIKE ?').get(`${today}%`);
+  const profitObj = getStmt('SELECT SUM(profit) as val FROM transactions').get();
+  const ordersObj = getStmt('SELECT COUNT(*) as val FROM transactions WHERE timestamp LIKE ?').get(`${today}%`);
+  const lowStockObj = getStmt('SELECT COUNT(*) as val FROM products WHERE stock < 5').get();
 
   return {
     totalRevenue: revenueObj?.val || 0,
@@ -209,11 +219,11 @@ export function getDashboardStats() {
 }
 
 export function getRecentActivity() {
-  return db.prepare('SELECT * FROM transactions ORDER BY timestamp DESC LIMIT 5').all();
+  return getStmt('SELECT * FROM transactions ORDER BY timestamp DESC LIMIT 5').all();
 }
 
 export function getTopSellingProducts() {
-  const txs = db.prepare('SELECT items_json FROM transactions ORDER BY timestamp DESC LIMIT 100').all();
+  const txs = getStmt('SELECT items_json FROM transactions ORDER BY timestamp DESC LIMIT 100').all();
   const map = {};
 
   txs.forEach(tx => {
@@ -231,7 +241,7 @@ export function getTopSellingProducts() {
 }
 
 export function getSalesByCategory() {
-  const txs = db.prepare('SELECT items_json FROM transactions ORDER BY timestamp DESC LIMIT 500').all();
+  const txs = getStmt('SELECT items_json FROM transactions ORDER BY timestamp DESC LIMIT 500').all();
   const map = {};
 
   txs.forEach(tx => {
@@ -251,7 +261,7 @@ export function getSalesByCategory() {
 
 export function getSalesByHour() {
   // Aggregate sales by hour of day (00-23) for the last 30 days
-  return db.prepare(`
+  return getStmt(`
     SELECT strftime('%H', timestamp) as hour, SUM(total) as sales
     FROM transactions
     WHERE timestamp >= date('now', '-30 days')
@@ -262,7 +272,7 @@ export function getSalesByHour() {
 
 // --- Products ---
 export function getProducts() {
-  return db.prepare('SELECT * FROM products ORDER BY name ASC').all();
+  return getStmt('SELECT * FROM products ORDER BY name ASC').all();
 }
 
 export function addProduct(product) {
@@ -276,7 +286,7 @@ export function addProduct(product) {
     sku = `GE-${dateStr}-${randomSuffix}`;
   }
 
-  const stmt = db.prepare(`
+  const stmt = getStmt(`
     INSERT INTO products (name, sku, category, price_buy, price_sell, stock, image, warranty)
     VALUES (@name, @sku, @category, @price_buy, @price_sell, @stock, @image, @warranty)
   `);
@@ -285,7 +295,7 @@ export function addProduct(product) {
 
 export function updateProduct(product) {
   const { id, name, sku, category, price_buy, price_sell, stock, image, warranty } = product;
-  const stmt = db.prepare(`
+  const stmt = getStmt(`
     UPDATE products 
     SET name = @name, sku = @sku, category = @category, price_buy = @price_buy, 
         price_sell = @price_sell, stock = @stock, image = @image, warranty = @warranty
@@ -295,7 +305,7 @@ export function updateProduct(product) {
 }
 
 export function deleteProduct(id) {
-  return db.prepare('DELETE FROM products WHERE id = ?').run(id);
+  return getStmt('DELETE FROM products WHERE id = ?').run(id);
 }
 
 export function importProductsFromCSV(filePath) {
@@ -354,7 +364,7 @@ export function importProductsFromCSV(filePath) {
         try {
           insert.run(name, sku, category, cost, price, stock, warranty);
           count++;
-        } catch (e) {
+        } catch {
           console.warn(`Skipping duplicate or invalid row ${i}: ${name}`);
         }
       }
@@ -618,9 +628,9 @@ export function restoreDatabase(backupPath) {
             try {
 
               db.prepare(`INSERT INTO main.${tableName} (${colStr}) SELECT ${colStr} FROM backup.${tableName}`).run();
-            } catch (e) {
-              console.error(`Failed to restore table ${tableName}:`, e.message);
-              throw e; // Critical error, abort transaction
+            } catch (err) {
+              console.error(`Failed to restore table ${tableName}:`, err.message);
+              throw err; // Critical error, abort transaction
             }
           } else {
             console.warn(`No common columns for table ${tableName}, skipping data.`);
@@ -636,7 +646,7 @@ export function restoreDatabase(backupPath) {
         try {
           db.prepare('DELETE FROM main.sqlite_sequence').run();
           db.prepare('INSERT INTO main.sqlite_sequence SELECT * FROM backup.sqlite_sequence').run();
-        } catch (e) { console.warn("Failed to restore sqlite_sequence", e); }
+        } catch { console.warn("Failed to restore sqlite_sequence"); }
       }
     });
 
@@ -645,7 +655,7 @@ export function restoreDatabase(backupPath) {
     return { success: true };
   } catch (err) {
     console.error("Restore Error:", err);
-    try { db.prepare('DETACH DATABASE backup').run(); } catch (e) { }
+    try { db.prepare('DETACH DATABASE backup').run(); } catch { /* ignore */ }
     throw err;
   }
 }

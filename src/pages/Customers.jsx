@@ -18,10 +18,6 @@ export default function Customers() {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerHistory, setCustomerHistory] = useState([]);
 
-  useEffect(() => {
-    loadCustomers();
-  }, []);
-
   const loadCustomers = async () => {
     try {
       const data = await window.api.getCustomers();
@@ -30,6 +26,10 @@ export default function Customers() {
       console.error("Failed to load customers", error);
     }
   };
+
+  useEffect(() => {
+    loadCustomers();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -48,10 +48,10 @@ export default function Customers() {
     if (!confirm("Delete this customer? This cannot be undone.")) return;
     try {
       await window.api.deleteCustomer(id);
-      loadCustomers();
-    } catch (err) {
-      alert("Failed to delete customer");
-    }
+      await loadCustomers();
+      } catch {
+      alert("Failed to delete customer.");
+      }
   };
 
   const handleViewHistory = async (customer) => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, ShoppingCart, Package, History, Monitor,
@@ -6,21 +6,16 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { cn } from './ui/Card';
 import logoImage from '/logo.webp';
 
-export default function Sidebar({ collapsed, setCollapsed }) {
-  const { user, logout } = useAuth();
-
-  const toggleCollapsed = () => setCollapsed(!collapsed);
-
+const NavItem = ({ to, icon: Icon, label, collapsed }) => {
   const linkClass = ({ isActive }) =>
     `flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden mb-1 ${isActive
       ? 'bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20'
       : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 hover:border hover:border-slate-700/50 border border-transparent'
     }`;
 
-  const NavItem = ({ to, icon: Icon, label }) => (
+  return (
     <NavLink to={to} className={linkClass}>
       <div className="relative z-10 p-0.5">
         <Icon size={20} />
@@ -40,12 +35,18 @@ export default function Sidebar({ collapsed, setCollapsed }) {
       {!collapsed && <div className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity text-cyan-500"><ChevronRight size={14} /></div>}
     </NavLink>
   );
+};
+
+export default function Sidebar({ collapsed, setCollapsed }) {
+  const { user, logout } = useAuth();
+
+  const toggleCollapsed = () => setCollapsed(!collapsed);
 
   return (
     <motion.aside
       initial={false}
       animate={{ width: collapsed ? 80 : 280 }}
-      className="h-screen bg-[#020617]/80 backdrop-blur-xl border-r border-slate-800/50 flex flex-col shrink-0 z-50 relative"
+      className="h-screen glass border-r border-slate-800/50 flex flex-col shrink-0 z-50 relative"
     >
       {/* Brand */}
       <div className="h-20 flex items-center px-6 border-b border-slate-800/50">
@@ -82,18 +83,18 @@ export default function Sidebar({ collapsed, setCollapsed }) {
         <div>
           {!collapsed && <div className="px-4 text-[10px] uppercase font-bold text-slate-600 mb-2 tracking-wider">Main</div>}
           <div className="space-y-1">
-            <NavItem to="/" icon={LayoutDashboard} label="Dashboard" />
-            <NavItem to="/pos" icon={ShoppingCart} label="POS Terminal" />
-            <NavItem to="/stock" icon={Package} label="Inventory" />
-            <NavItem to="/history" icon={History} label="Sales History" />
+            <NavItem to="/" icon={LayoutDashboard} label="Dashboard" collapsed={collapsed} />
+            <NavItem to="/pos" icon={ShoppingCart} label="POS Terminal" collapsed={collapsed} />
+            <NavItem to="/stock" icon={Package} label="Inventory" collapsed={collapsed} />
+            <NavItem to="/history" icon={History} label="Sales History" collapsed={collapsed} />
           </div>
         </div>
 
         <div>
           {!collapsed && <div className="px-4 text-[10px] uppercase font-bold text-slate-600 mb-2 tracking-wider">Services</div>}
           <div className="space-y-1">
-            <NavItem to="/customers" icon={Users} label="Customers" />
-            <NavItem to="/repairs" icon={Wrench} label="Repairs" />
+            <NavItem to="/customers" icon={Users} label="Customers" collapsed={collapsed} />
+            <NavItem to="/repairs" icon={Wrench} label="Repairs" collapsed={collapsed} />
           </div>
         </div>
 
@@ -101,8 +102,8 @@ export default function Sidebar({ collapsed, setCollapsed }) {
           <div>
             {!collapsed && <div className="px-4 text-[10px] uppercase font-bold text-slate-600 mb-2 tracking-wider">System</div>}
             <div className="space-y-1">
-              <NavItem to="/users" icon={Shield} label="Access Control" />
-              <NavItem to="/settings" icon={Settings} label="Settings" />
+              <NavItem to="/users" icon={Shield} label="Access Control" collapsed={collapsed} />
+              <NavItem to="/settings" icon={Settings} label="Settings" collapsed={collapsed} />
             </div>
           </div>
         )}

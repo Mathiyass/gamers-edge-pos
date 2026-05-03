@@ -49,6 +49,10 @@ input, button, textarea { font-family: inherit; }
   animation: fadeIn 0.4s ease-out forwards;
 }
 
+.glass {
+  @apply backdrop-blur-xl border border-slate-800/50 bg-slate-900/60;
+}
+
 /* Glassmorphism Utilities */
 .glass-panel {
   background: var(--color-glass-bg);

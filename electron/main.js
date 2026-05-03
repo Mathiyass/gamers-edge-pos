@@ -1,4 +1,3 @@
-/* eslint-env node */
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';

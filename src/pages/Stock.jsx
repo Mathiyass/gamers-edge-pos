@@ -285,7 +285,6 @@ export default function Stock() {
                 {filtered.map(p => {
                   const profit = p.price_sell - p.price_buy;
                   const profitPercent = p.price_buy > 0 ? ((profit / p.price_buy) * 100).toFixed(1) : 0;
-                  const isLowStock = p.stock === 0;
 
                   return (
                     <motion.tr

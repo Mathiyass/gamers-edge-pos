@@ -1,7 +1,3 @@
-// Simple beep sounds encoded as Data URIs to avoid file loading issues in Electron/Vite
-const beepUrl = "data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU"; // Placeholder short beep
-const successUrl = "data:audio/wav;base64,UklGRi9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YS"; // Placeholder chime
-
 // Real synthesized beeps (shortened for brevity in code, real implementation uses AudioContext for pro feel)
 // Since pure base64 WAVs are long, let's use the Web Audio API for procedural sounds. It's lighter and cleaner.
 

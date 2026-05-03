@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
-import { X } from 'lucide-react';
 
-const RepairTicket = ({ data, onClose }) => {
+const RepairTicket = ({ data }) => {
   useEffect(() => {
     if (data) {
        // Auto-print when data is available

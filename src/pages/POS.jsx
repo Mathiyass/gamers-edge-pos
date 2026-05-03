@@ -99,7 +99,7 @@ export default function POS() {
       }, 500);
       return () => clearTimeout(timer);
     } else {
-      if (customerPoints !== 0) setCustomerPoints(0);
+      setCustomerPoints(prev => prev !== 0 ? 0 : prev);
     }
   }, [customer]);
 

@@ -31,11 +31,11 @@ export default function Login() {
       {/* Background Ambience */}
       <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-cyan-500/20 rounded-full blur-[120px]"></div>
       <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-indigo-500/20 rounded-full blur-[120px]"></div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-        className="bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 p-10 rounded-3xl w-full max-w-md shadow-2xl z-10"
-      >
+<motion.div
+  initial={{ opacity: 0, scale: 0.95 }}
+  animate={{ opacity: 1, scale: 1 }}
+  className="glass p-10 rounded-3xl w-full max-w-md shadow-2xl z-10"
+>
         <div className="text-center mb-8">
           <div className="mx-auto w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-900/30 mb-4">
             <ShieldCheck size={32} className="text-white" />

@@ -43,7 +43,7 @@ export default function Settings() {
     try {
       await window.api.updateSettings(settings);
       showMsg('Store settings updated successfully!', 'success');
-    } catch (e) {
+    } catch {
       showMsg('Failed to update settings', 'error');
     }
   };
@@ -62,7 +62,7 @@ export default function Settings() {
       } else {
         showMsg('Backup cancelled', 'neutral');
       }
-    } catch (e) {
+    } catch {
       showMsg('Backup failed', 'error');
     }
   };
