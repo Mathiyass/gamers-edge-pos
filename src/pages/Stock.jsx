@@ -179,7 +179,17 @@ export default function Stock() {
   const potentialProfit = products.reduce((acc, p) => acc + ((p.price_sell - p.price_buy) * p.stock), 0);
 
   return (
-    <div className="h-full flex flex-col space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="h-full flex flex-col space-y-6 relative bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0a0a] to-black"
+    >
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[120px] mix-blend-screen" />
+        <div className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-cyan-600/20 rounded-full blur-[120px] mix-blend-screen" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/10 rounded-full blur-[150px] mix-blend-screen" />
+      </div>
 
       {/* Top Bar / Dashboard Header */}
       <div className="flex flex-col gap-6">
@@ -289,8 +299,9 @@ export default function Stock() {
                   return (
                     <motion.tr
                       key={p.id}
-                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                      className="transition-colors hover:bg-slate-800/50 border-b border-slate-800/50 group"
+                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.3 }}
+                      className="transition-colors hover:bg-white/[0.05] border-b border-white/10 group backdrop-blur-sm shadow-[0_0_15px_rgba(0,0,0,0.2)]"
                     >
                       {/* Image & Name */}
                       <TableCell className="pl-6">
@@ -443,6 +454,6 @@ export default function Stock() {
           </div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

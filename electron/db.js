@@ -88,6 +88,10 @@ export function initDb() {
       key TEXT PRIMARY KEY,
       value TEXT
     );
+
+    CREATE INDEX IF NOT EXISTS idx_transactions_timestamp ON transactions(timestamp);
+    CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku);
+    CREATE INDEX IF NOT EXISTS idx_customers_name ON customers(name);
   `);
 
   // 2. Schema Fixer (Lazy Migrations)

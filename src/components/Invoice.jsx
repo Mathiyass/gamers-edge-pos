@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import logoImage from '/logo.webp';
 
@@ -28,8 +29,8 @@ const Invoice = ({ data, onClose }) => {
 
   if (!data) return null;
 
-  return (
-    <div id="invoice-content" className="font-sans w-full min-h-screen bg-white text-slate-900 absolute top-0 left-0 z-50 p-12 flex flex-col">
+  return createPortal(
+    <div id="invoice-content" className="font-sans w-full min-h-screen h-screen overflow-y-auto bg-white text-slate-900 fixed top-0 left-0 z-50 p-12 flex flex-col">
       {/* Close Button (Hidden on Print) */}
       <button
         onClick={onClose}
@@ -163,7 +164,8 @@ const Invoice = ({ data, onClose }) => {
           <div className="h-1 w-4 bg-slate-200 rounded-full"></div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 
-const StatCard = ({ title, value, icon: Icon, color, subtext, onClick }) => (
+const StatCard = React.memo(({ title, value, icon: Icon, color, subtext, onClick }) => (
   <Card
     onClick={onClick}
     hover
@@ -24,7 +24,7 @@ const StatCard = ({ title, value, icon: Icon, color, subtext, onClick }) => (
     </div>
     {subtext && <p className="text-xs text-slate-500 relative z-10 font-medium">{subtext}</p>}
   </Card>
-);
+));
 
 export default function Dashboard() {
   const [stats, setStats] = useState({ totalRevenue: 0, netProfit: 0, totalOrders: 0, lowStockCount: 0 });
@@ -77,17 +77,29 @@ export default function Dashboard() {
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="h-full overflow-y-auto custom-scrollbar pb-10"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.5, staggerChildren: 0.1 }}
+      className="h-full overflow-y-auto custom-scrollbar pb-10 relative bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0a0a] to-black"
     >
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-white flex items-center gap-3 neon-text">
-          <Activity className="text-cyan-400" />
-          Dashboard
-        </h1>
-        <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[120px] mix-blend-screen" />
+        <div className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-cyan-600/20 rounded-full blur-[120px] mix-blend-screen" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/10 rounded-full blur-[150px] mix-blend-screen" />
+      </div>
+      <div className="flex items-center justify-between mb-8 relative z-10">
+        <div>
+          <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
+            <Activity className="text-cyan-400" size={32} />
+            <span className="bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">Dashboard</span>
+          </h1>
+          <p className="text-slate-400 mt-1 font-medium text-sm flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            System Live
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="hover:shadow-[0_0_15px_rgba(6,182,212,0.4)] transition-all duration-300">
           Refresh Data
         </Button>
       </div>

@@ -58,23 +58,33 @@ export default function Users() {
   };
 
   return (
-    <div className="h-full p-8 flex flex-col overflow-hidden relative">
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute top-10 right-10 w-96 h-96 bg-purple-500/5 rounded-full blur-[100px]" />
-        <div className="absolute bottom-10 left-10 w-96 h-96 bg-cyan-500/5 rounded-full blur-[100px]" />
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="h-full p-8 flex flex-col overflow-hidden relative bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0a0a] to-black"
+    >
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[120px] mix-blend-screen" />
+        <div className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-cyan-600/20 rounded-full blur-[120px] mix-blend-screen" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/10 rounded-full blur-[150px] mix-blend-screen" />
       </div>
 
       <div className="flex justify-between items-center mb-8 z-10 shrink-0">
         <div>
-          <h1 className="text-3xl font-black text-white flex items-center gap-3">
-            <Shield className="text-cyan-500" size={32} /> User Management
+          <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
+            <Shield className="text-cyan-400" size={32} />
+            <span className="bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">User Management</span>
           </h1>
-          <p className="text-slate-400 mt-1 font-medium">Manage system access and staff roles.</p>
+          <p className="text-slate-400 mt-1 font-medium text-sm flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Manage system access and staff roles.
+          </p>
         </div>
         <Button
           variant="primary"
           onClick={() => { setEditingId(null); setFormData({ name: '', username: '', password: '', role: 'staff' }); setIsModalOpen(true); }}
-          className="shadow-lg shadow-cyan-900/20"
+          className="shadow-lg shadow-cyan-900/20 hover:shadow-[0_0_15px_rgba(6,182,212,0.4)] transition-all duration-300"
         >
           <UserPlus size={18} className="mr-2" /> Add User
         </Button>
@@ -199,6 +209,6 @@ export default function Users() {
           </div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

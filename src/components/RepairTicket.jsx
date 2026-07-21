@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 const RepairTicket = ({ data }) => {
   useEffect(() => {
@@ -11,8 +12,8 @@ const RepairTicket = ({ data }) => {
 
   if (!data) return null;
 
-  return (
-    <div id="repair-ticket-content" className="font-sans w-full h-full bg-white text-slate-900 absolute top-0 left-0 z-50 p-10 hidden print:block">
+  return createPortal(
+    <div id="repair-ticket-content" className="font-sans w-full min-h-screen h-screen overflow-y-auto bg-white text-slate-900 fixed top-0 left-0 z-50 p-10 hidden print:block">
        {/* Header */}
        <div className="text-center border-b-2 border-black pb-4 mb-6">
         <h1 className="text-4xl font-extrabold uppercase tracking-tighter">GamersEdge</h1>
@@ -66,7 +67,8 @@ const RepairTicket = ({ data }) => {
            <p className="font-bold">Customer Signature ______________________</p>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

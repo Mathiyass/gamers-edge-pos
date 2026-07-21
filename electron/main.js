@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 let mainWindow;
 
 function createWindow() {
-  const preloadPath = path.join(__dirname, 'preload.js');
+  const preloadPath = path.join(__dirname, 'preload.cjs');
   // Dev vs Prod URL
   const startUrl = process.env.NODE_ENV === 'development' 
     ? 'http://localhost:5173' 

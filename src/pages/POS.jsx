@@ -104,7 +104,7 @@ export default function POS() {
   }, [customer]);
 
   // --- Actions ---
-  const addToCart = (product) => {
+  const addToCart = React.useCallback((product) => {
     playSound('beep');
     setCart(prev => {
       const existing = prev.find(item => item.id === product.id);
@@ -114,9 +114,9 @@ export default function POS() {
       }
       return [...prev, { ...product, quantity: 1 }];
     });
-  };
+  }, []);
 
-  const updateQuantity = (id, delta) => {
+  const updateQuantity = React.useCallback((id, delta) => {
     setCart(prev => prev.map(item => {
       if (item.id === id) {
         const product = products.find(p => p.id === id);
@@ -129,9 +129,9 @@ export default function POS() {
       }
       return item;
     }));
-  };
+  }, [products]);
 
-  const removeFromCart = (id) => setCart(prev => prev.filter(item => item.id !== id));
+  const removeFromCart = React.useCallback((id) => setCart(prev => prev.filter(item => item.id !== id)), []);
 
   const handleCheckout = async (e) => {
     e.preventDefault();
@@ -216,16 +216,26 @@ export default function POS() {
   };
 
   // --- Render ---
-  const filteredProducts = products.filter(p => {
+  const filteredProducts = React.useMemo(() => products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || (p.sku || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
     return matchesSearch && matchesCategory;
-  });
+  }), [products, searchTerm, selectedCategory]);
 
-  const categories = ['All', ...new Set(products.map(p => p.category))].sort();
+  const categories = React.useMemo(() => ['All', ...new Set(products.map(p => p.category))].sort(), [products]);
 
   return (
-    <div className="flex h-full gap-6">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="flex h-full gap-6 relative bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0a0a] to-black"
+    >
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[120px] mix-blend-screen" />
+        <div className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-cyan-600/20 rounded-full blur-[120px] mix-blend-screen" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/10 rounded-full blur-[150px] mix-blend-screen" />
+      </div>
 
       {/* LEFT: Product Grid */}
       <div className="flex-1 flex flex-col min-w-0">
@@ -243,9 +253,9 @@ export default function POS() {
               <button
                 key={c}
                 onClick={() => setSelectedCategory(c)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all border ${selectedCategory === c
-                  ? 'bg-cyan-500 text-white border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-                  : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-800'
+                className={`px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-300 border ${selectedCategory === c
+                  ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50 shadow-[0_0_20px_rgba(6,182,212,0.3)] neon-border'
+                  : 'bg-slate-900/50 border-slate-800 text-slate-400 hover:text-cyan-300 hover:border-cyan-500/30'
                   }`}
               >
                 {c}
@@ -259,35 +269,36 @@ export default function POS() {
             {filteredProducts.map(product => (
               <motion.button
                 key={product.id}
-                whileHover={{ scale: 1.02, translateY: -2 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.03, y: -4 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => addToCart(product)}
                 disabled={product.stock <= 0}
-                className={`text-left bg-slate-900/40 backdrop-blur-md border border-slate-800 rounded-2xl overflow-hidden shadow-lg group hover:border-cyan-500/50 hover:shadow-[0_0_20px_rgba(6,182,212,0.1)] transition-all flex flex-col h-full ${product.stock <= 0 ? 'opacity-50 grayscale' : ''}`}
+                className={`text-left glass-card rounded-2xl overflow-hidden group hover:border-cyan-400/50 hover:shadow-[0_0_25px_rgba(6,182,212,0.15)] transition-all duration-300 flex flex-col h-full ${product.stock <= 0 ? 'opacity-50 grayscale' : ''}`}
               >
-                <div className="aspect-[4/3] bg-slate-950/50 relative overflow-hidden">
+                <div className="aspect-[4/3] bg-slate-950/80 relative overflow-hidden border-b border-white/5">
                   {product.image ? (
-                    <img src={product.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="" />
+                    <img src={product.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100" alt="" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-700 bg-slate-900/50">
-                      <Package size={32} strokeWidth={1.5} />
+                    <div className="w-full h-full flex items-center justify-center text-slate-700 bg-slate-900/50 group-hover:text-cyan-500/30 transition-colors">
+                      <Package size={40} strokeWidth={1} />
                     </div>
                   )}
-                  <span className={`absolute top-2 right-2 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border shadow-sm backdrop-blur-md ${product.stock === 0
-                    ? 'bg-red-500/20 text-red-300 border-red-500/40'
-                    : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <span className={`absolute top-2 right-2 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border backdrop-blur-md shadow-lg ${product.stock === 0
+                    ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                    : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
                     }`}>
                     {product.stock === 0 ? 'Out of Stock' : `${product.stock} Left`}
                   </span>
                 </div>
-                <div className="p-4 flex flex-col flex-1">
-                  <h3 className="font-bold text-slate-200 text-sm leading-tight mb-2 line-clamp-2">{product.name}</h3>
+                <div className="p-4 flex flex-col flex-1 relative z-10">
+                  <h3 className="font-bold text-slate-200 text-sm leading-tight mb-3 line-clamp-2 group-hover:text-cyan-300 transition-colors">{product.name}</h3>
                   <div className="mt-auto flex justify-between items-end">
-                    <div className="text-cyan-400 font-bold text-lg">
-                      <span className="text-xs text-slate-500 font-normal mr-0.5">LKR</span>
+                    <div className="text-cyan-400 font-black text-lg drop-shadow-md">
+                      <span className="text-xs text-slate-500 font-medium mr-1 uppercase tracking-widest">LKR</span>
                       {product.price_sell.toLocaleString()}
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-cyan-500/10 text-cyan-400 flex items-center justify-center -mr-1 hover:bg-cyan-500 hover:text-white transition-colors">
+                    <div className="w-8 h-8 rounded-full bg-slate-800/80 text-cyan-400 border border-slate-700 flex items-center justify-center -mr-1 group-hover:bg-cyan-500 group-hover:text-slate-950 group-hover:border-cyan-400 transition-all duration-300 shadow-[0_0_10px_rgba(6,182,212,0)] group-hover:shadow-[0_0_15px_rgba(6,182,212,0.4)]">
                       <Plus size={16} strokeWidth={3} />
                     </div>
                   </div>
@@ -300,12 +311,12 @@ export default function POS() {
 
       {/* RIGHT: Cart */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="w-[420px] flex flex-col shadow-2xl p-0 overflow-hidden border border-slate-800 bg-slate-900/80 backdrop-blur-xl h-full rounded-2xl"
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.4, type: 'spring' }}
+        className="w-[420px] flex flex-col p-0 overflow-hidden rounded-2xl glass-card shadow-[0_0_40px_rgba(0,0,0,0.5)] border-r-0 border-b-0"
       >
-        <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+        <div className="p-5 border-b border-white/5 flex justify-between items-center bg-slate-950/40 backdrop-blur-md">
           <h2 className="text-lg font-bold text-white flex items-center gap-2 neon-text">
             <ShoppingCart className="text-cyan-400" /> Current Sale
           </h2>
@@ -328,10 +339,10 @@ export default function POS() {
               <motion.div
                 key={item.id}
                 layout
-                initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, x: -20 }}
-                className="bg-slate-900/80 border border-slate-800/50 rounded-xl p-3 flex gap-3 group relative hover:border-cyan-500/30 hover:bg-slate-900 transition-all shadow-sm"
+                exit={{ opacity: 0, scale: 0.95, x: -20 }}
+                className="bg-slate-900/40 border border-white/5 rounded-xl p-3 flex gap-3 group relative hover:border-cyan-500/30 hover:bg-slate-800/50 transition-all shadow-lg backdrop-blur-sm"
               >
                 <div className="w-14 h-14 bg-slate-950 rounded-lg flex items-center justify-center shrink-0 overflow-hidden border border-slate-800">
                   {item.image ? <img src={item.image} className="w-full h-full object-cover" /> : <Package size={20} className="text-slate-700" />}
@@ -359,24 +370,24 @@ export default function POS() {
           </AnimatePresence>
         </div>
 
-        <div className="shrink-0 p-5 bg-slate-900/80 border-t border-slate-800 space-y-3 backdrop-blur-md">
-          <div className="space-y-2 pb-4 border-b border-slate-800/50">
-            <div className="flex justify-between text-slate-400 text-sm">
+        <div className="shrink-0 p-6 glass border-t border-white/10 space-y-4">
+          <div className="space-y-3 pb-5 border-b border-white/10">
+            <div className="flex justify-between text-slate-400 text-sm font-medium">
               <span>Subtotal</span>
-              <span>{subtotal.toLocaleString()}</span>
+              <span className="text-slate-300">{subtotal.toLocaleString()}</span>
             </div>
 
             {/* Discount Row */}
-            <div className="flex justify-between text-slate-400 text-sm h-6">
-              <button onClick={() => setIsDiscountModalOpen(true)} className="flex items-center gap-1 text-cyan-500 hover:text-cyan-400 transition-colors text-xs font-bold uppercase tracking-wider">
+            <div className="flex justify-between items-center text-slate-400 text-sm h-6">
+              <button onClick={() => setIsDiscountModalOpen(true)} className="flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 transition-colors text-xs font-bold uppercase tracking-wider bg-cyan-500/10 px-2 py-1 rounded-md border border-cyan-500/20">
                 <Percent size={12} /> {discount > 0 ? 'Edit Discount' : 'Add Discount'}
               </button>
-              {discount > 0 && <span className="text-red-400">-{discount.toLocaleString()}</span>}
+              {discount > 0 && <span className="text-red-400 font-bold">-{discount.toLocaleString()}</span>}
             </div>
 
             {/* Points Row */}
             {usePoints && (
-              <div className="flex justify-between text-emerald-400 text-sm font-medium animate-pulse">
+              <div className="flex justify-between text-purple-400 text-sm font-medium animate-pulse">
                 <span className="flex items-center gap-1"><Award size={14} /> Points Redeemed</span>
                 <span>-{pointsDiscount.toLocaleString()}</span>
               </div>
@@ -384,7 +395,7 @@ export default function POS() {
 
             {/* Tax Row */}
             {taxRate > 0 && (
-              <div className="flex justify-between text-slate-400 text-sm">
+              <div className="flex justify-between text-slate-400 text-sm font-medium">
                 <span>Tax ({taxRate}%)</span>
                 <span>+{taxAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
@@ -392,24 +403,30 @@ export default function POS() {
           </div>
 
           <div className="flex justify-between items-end text-white pt-1">
-            <span className="text-sm font-medium text-slate-400 uppercase tracking-widest">Total Payable</span>
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Total Payable</span>
             <div className="text-right">
-              <div className="text-3xl font-bold text-cyan-400 text-shadow-glow">LKR {total.toLocaleString()}</div>
+              <div className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 drop-shadow-[0_0_10px_rgba(6,182,212,0.4)]">
+                LKR {total.toLocaleString()}
+              </div>
             </div>
           </div>
 
-          <Button
+          <button
             onClick={() => {
               setSplitAmounts({ cash: total, card: 0 });
               setIsCheckoutOpen(true);
             }}
             disabled={cart.length === 0}
-            variant="primary"
-            size="lg"
-            className="w-full mt-4 py-4 text-lg shadow-[0_0_30px_rgba(6,182,212,0.3)]"
+            className={`w-full mt-4 py-4 px-6 rounded-xl flex items-center justify-center font-bold text-lg transition-all duration-300 relative overflow-hidden ${
+              cart.length === 0 
+              ? 'bg-slate-800 text-slate-500 cursor-not-allowed' 
+              : 'bg-gradient-to-r from-cyan-500 to-purple-500 text-white shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:shadow-[0_0_30px_rgba(168,85,247,0.6)] hover:scale-[1.02]'
+            }`}
           >
-            <CreditCard size={20} className="mr-2" /> Checkout (F12)
-          </Button>
+            {cart.length > 0 && <div className="absolute inset-0 bg-white/20 hover:bg-transparent transition-colors"></div>}
+            <CreditCard size={20} className="mr-3 relative z-10" /> 
+            <span className="relative z-10">Checkout (F12)</span>
+          </button>
         </div>
       </motion.div>
 
@@ -584,6 +601,6 @@ export default function POS() {
 
       <Invoice data={printData} onClose={() => setPrintData(null)} />
 
-    </div>
+    </motion.div>
   );
 }
