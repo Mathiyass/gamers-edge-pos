@@ -29,7 +29,8 @@ function createWindow() {
     title: "GamersEdge POS",
     backgroundColor: '#0f172a',
     show: false,
-    frame: true
+    frame: true,
+    icon: path.join(__dirname, 'icon.png')
   });
 
   mainWindow.once('ready-to-show', () => mainWindow.show());

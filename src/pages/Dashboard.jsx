@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import ShaderBackground from '../components/ui/ShaderBackground';
 
 const StatCard = React.memo(({ title, value, icon: Icon, color, subtext, onClick }) => (
   <Card
@@ -81,13 +82,9 @@ export default function Dashboard() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.5, staggerChildren: 0.1 }}
-      className="h-full overflow-y-auto custom-scrollbar pb-10 relative bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0a0a] to-black"
+      className="h-full overflow-y-auto custom-scrollbar pb-10 relative bg-transparent"
     >
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[120px] mix-blend-screen" />
-        <div className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-cyan-600/20 rounded-full blur-[120px] mix-blend-screen" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/10 rounded-full blur-[150px] mix-blend-screen" />
-      </div>
+      <ShaderBackground />
       <div className="flex items-center justify-between mb-8 relative z-10">
         <div>
           <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">

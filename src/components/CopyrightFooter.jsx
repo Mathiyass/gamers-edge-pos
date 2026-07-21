@@ -5,7 +5,7 @@ export default function CopyrightFooter({ className = "" }) {
     return (
         <div className={`w-full text-center py-4 text-xs z-50 ${className}`}>
             <a
-                href="https://mathiyass.github.io/MAportfolio/"
+                href="https://mathiya.cc"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-slate-500 hover:text-cyan-400 transition-colors font-medium group"
