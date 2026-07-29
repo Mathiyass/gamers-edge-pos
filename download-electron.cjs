@@ -4,12 +4,17 @@ const path = require('path');
 const fs = require('fs');
 
 async function go() {
-  console.log('Downloading electron...');
-  const zipPath = await downloadArtifact({ version: '32.0.0', artifactName: 'electron', platform: 'win32', arch: 'x64' });
-  const distPath = path.join(__dirname, 'node_modules', 'electron', 'dist');
+  const electronPkg = require('./node_modules/electron/package.json');
+  const version = electronPkg.version;
+  console.log(`Downloading Electron v${version}...`);
+  const zipPath = await downloadArtifact({ version, artifactName: 'electron', platform: process.platform, arch: process.arch });
+  const distPath = path.resolve(__dirname, 'node_modules', 'electron', 'dist');
   console.log('Extracting to', distPath);
   await extract(zipPath, { dir: distPath });
-  fs.writeFileSync(path.join(__dirname, 'node_modules', 'electron', 'path.txt'), 'electron.exe');
-  console.log('Done!');
+  fs.writeFileSync(path.resolve(__dirname, 'node_modules', 'electron', 'path.txt'), process.platform === 'win32' ? 'electron.exe' : 'electron');
+  console.log('Successfully installed Electron binary!');
 }
-go().catch(console.error);
+go().catch(err => {
+  console.error(err);
+  process.exit(1);
+});

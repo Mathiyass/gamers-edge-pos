@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import ShaderBackground from '../components/ui/ShaderBackground';
 
 const StatCard = React.memo(({ title, value, icon: Icon, color, subtext, onClick }) => (
   <Card
@@ -84,7 +83,6 @@ export default function Dashboard() {
       transition={{ duration: 0.5, staggerChildren: 0.1 }}
       className="h-full overflow-y-auto custom-scrollbar pb-10 relative bg-transparent"
     >
-      <ShaderBackground />
       <div className="flex items-center justify-between mb-8 relative z-10">
         <div>
           <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">

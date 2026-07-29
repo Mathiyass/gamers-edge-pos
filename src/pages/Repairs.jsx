@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import RepairTicket from '../components/RepairTicket';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import ShaderBackground from '../components/ui/ShaderBackground';
 import Input from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
 
@@ -84,8 +83,6 @@ export default function Repairs() {
       transition={{ duration: 0.5 }}
       className="h-full p-6 flex flex-col overflow-hidden relative bg-transparent"
     >
-      <ShaderBackground />
-
       <div className="flex justify-between items-center mb-6 z-10 shrink-0">
         <div>
           <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">

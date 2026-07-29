@@ -3,7 +3,6 @@ import { History as HistoryIcon, Search, Calendar, FileText, Trash2, Save, X, Ro
 import { motion, AnimatePresence } from 'framer-motion';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import ShaderBackground from '../components/ui/ShaderBackground';
 import Input from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
@@ -76,8 +75,6 @@ export default function History() {
             transition={{ duration: 0.5 }}
             className="h-full flex flex-col space-y-6 overflow-hidden relative bg-transparent"
         >
-            <ShaderBackground />
-
             {/* Header */}
             <div className="flex justify-between items-center bg-slate-900/50 p-6 rounded-2xl border border-slate-800 backdrop-blur-sm relative z-10">
                 <div>

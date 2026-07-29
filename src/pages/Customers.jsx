@@ -3,7 +3,6 @@ import { UserPlus, Search, Trophy, Mail, Phone, User, Trash2, History, X, Save, 
 import { motion, AnimatePresence } from 'framer-motion';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import ShaderBackground from '../components/ui/ShaderBackground';
 import Input from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
@@ -79,8 +78,6 @@ export default function Customers() {
       transition={{ duration: 0.5 }}
       className="h-full flex gap-6 p-6 overflow-hidden relative bg-transparent"
     >
-      <ShaderBackground />
-
       {/* Left: Add Form */}
       <div className="w-1/3 min-w-[320px] max-w-[400px] flex flex-col z-10">
         <Card className="flex flex-col h-fit">

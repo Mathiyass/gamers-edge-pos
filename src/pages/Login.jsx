@@ -27,10 +27,7 @@ export default function Login() {
   };
 
   return (
-    <div className="h-screen w-full bg-[#0f172a] flex items-center justify-center relative overflow-hidden font-sans">
-      {/* Background Ambience */}
-      <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-cyan-500/20 rounded-full blur-[120px]"></div>
-      <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-indigo-500/20 rounded-full blur-[120px]"></div>
+    <div className="h-screen w-full bg-[#121212] flex items-center justify-center relative overflow-hidden font-sans">
 <motion.div
   initial={{ opacity: 0, scale: 0.95 }}
   animate={{ opacity: 1, scale: 1 }}

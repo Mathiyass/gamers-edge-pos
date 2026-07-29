@@ -5,7 +5,6 @@ import Invoice from '../components/Invoice';
 import { playSound } from '../utils/sounds';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import ShaderBackground from '../components/ui/ShaderBackground';
 import Input from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
 
@@ -232,8 +231,6 @@ export default function POS() {
       transition={{ duration: 0.5 }}
       className="flex h-full gap-6 relative bg-transparent"
     >
-      <ShaderBackground />
-
       {/* LEFT: Product Grid */}
       <div className="flex-1 flex flex-col min-w-0">
         <header className="flex gap-4 mb-6 shrink-0">

@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import ShaderBackground from '../components/ui/ShaderBackground';
 import Input from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
@@ -186,8 +185,6 @@ export default function Stock() {
       transition={{ duration: 0.5 }}
       className="h-full flex flex-col space-y-6 relative bg-transparent"
     >
-      <ShaderBackground />
-
       {/* Top Bar / Dashboard Header */}
       <div className="flex flex-col gap-6">
         <div className="flex justify-between items-start">

@@ -3,7 +3,6 @@ import { Save, RefreshCw, ShieldAlert, Database, Server, UploadCloud, Store, Set
 import { motion, AnimatePresence } from 'framer-motion';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import ShaderBackground from '../components/ui/ShaderBackground';
 import Input from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
 
@@ -111,8 +110,6 @@ export default function Settings() {
       transition={{ duration: 0.5 }}
       className="h-full p-8 max-w-6xl mx-auto flex flex-col overflow-y-auto custom-scrollbar relative bg-transparent"
     >
-      <ShaderBackground />
-
       {/* Header */}
       <div className="mb-8 z-10 shrink-0">
         <h1 className="text-4xl font-black text-white tracking-tight flex items-center gap-3">

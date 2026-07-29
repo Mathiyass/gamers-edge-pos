@@ -73,9 +73,9 @@ void main() {
     vec2 uv = v_texCoord;
     vec2 mouse = u_mouse / u_resolution;
     
-    // Base colors from design system
-    vec3 spaceColor = vec3(0.07, 0.08, 0.08); // Dark Slate
-    vec3 blackColor = vec3(0.02, 0.03, 0.03); // Near Black
+    // Base colors from design system (Matte Black palette)
+    vec3 spaceColor = vec3(0.07, 0.07, 0.07); // Matte Black (#121212)
+    vec3 blackColor = vec3(0.04, 0.04, 0.04); // Deep Matte Black (#0a0a0a)
     vec3 accentColor = vec3(0.0, 0.95, 1.0); // #00f2ff
     
     // Mesh gradient logic
@@ -83,8 +83,8 @@ void main() {
     float n2 = snoise(uv * 2.0 - u_time * 0.07 + mouse * 0.5);
     
     vec3 color = mix(spaceColor, blackColor, uv.y);
-    color = mix(color, accentColor * 0.15, n1 * 0.5 + 0.5);
-    color = mix(color, vec3(0.1, 0.0, 0.2), n2 * 0.3 + 0.3); // Subtle deep purple hint
+    color = mix(color, accentColor * 0.12, n1 * 0.5 + 0.5);
+    color = mix(color, vec3(0.08, 0.05, 0.12), n2 * 0.2 + 0.2); // Subtle deep accent hint
     
     // Soft vignette
     float vignette = 1.0 - smoothstep(0.4, 1.2, length(uv - 0.5));
